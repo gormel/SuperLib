@@ -12,5 +12,10 @@
         {
             counter += count;
         }
+
+        public string get()
+        {
+            return counter.ToString();
+        }
     }
 }

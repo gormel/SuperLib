@@ -134,7 +134,7 @@ namespace SuperCore
                     generator.Emit(OpCodes.Ldloc_2);
                     generator.Emit(OpCodes.Ldfld, typeof (CallResult).GetField(nameof(CallResult.Result)));
                     if (method.ReturnType.IsValueType)
-                        generator.Emit(OpCodes.Unbox, method.ReturnType);
+                        generator.Emit(OpCodes.Unbox_Any, method.ReturnType);
                 }
 
                 generator.Emit(OpCodes.Ret);

@@ -7,6 +7,7 @@ namespace Testes
     {
         int add(int count);
         void hren(int count);
+        string get();
     }
 
     class Program
@@ -21,6 +22,7 @@ namespace Testes
 
             var result = generated.add(5);
             generated.hren(4);
+            var sResult = generated.get();
 
             Console.ReadLine();
         }
