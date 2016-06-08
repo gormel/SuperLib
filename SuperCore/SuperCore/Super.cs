@@ -56,6 +56,17 @@ namespace SuperCore
 
                 var generator = methodBuilder.GetILGenerator();
                 
+                //var info = new CallInfo();
+                //info.TypeName = typeBuilder.Name;
+                //info.MethodName = method.Name;
+                //args = new object[method.GetParameters().Lenght];
+                //for (int j = 0; j < args.Lenght; j++)
+                //{
+                //    args[j] = getArg(j);
+                //}
+                //info.Args = args;
+                //return mSuper.SendCall(info);
+
                 generator.DeclareLocal(typeof (object[]));//args
                 generator.DeclareLocal(typeof (CallInfo));
                 generator.Emit(OpCodes.Newobj, typeof(CallInfo));
