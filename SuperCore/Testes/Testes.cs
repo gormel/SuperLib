@@ -7,5 +7,10 @@
         {
             return counter += count;
         }
+
+        public void hren(int count)
+        {
+            counter += count;
+        }
     }
 }

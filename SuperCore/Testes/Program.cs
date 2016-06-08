@@ -6,6 +6,7 @@ namespace Testes
     public interface ITestes
     {
         int add(int count);
+        void hren(int count);
     }
 
     class Program
@@ -13,11 +14,13 @@ namespace Testes
         static void Main(string[] args)
         {
             var superTest = new SuperTest();
-            superTest.Register<ITestes>(new Testes());
+            var testes = new Testes();
+            superTest.Register<ITestes>(testes);
 
             var generated = superTest.GetInstance<ITestes>();
 
-            generated.add(5);
+            var result = generated.add(5);
+            generated.hren(4);
 
             Console.ReadLine();
         }

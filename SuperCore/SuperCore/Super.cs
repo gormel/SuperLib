@@ -23,10 +23,11 @@ namespace SuperCore
         {
             var obj = mRegistred[info.TypeName];
             var method = obj.GetType().GetMethod(info.MethodName);
+            var result = method.Invoke(obj, info.Args);
             return new CallResult
             {
                 CallID = info.CallID,
-                Result = method.Invoke(obj, info.Args)
+                Result = result
             };
         }
 
@@ -77,6 +78,7 @@ namespace SuperCore
 
                 generator.DeclareLocal(typeof (CallInfo));//loc_0
                 generator.DeclareLocal(typeof (object[]));//loc_1
+                generator.DeclareLocal(typeof (CallResult));//loc_2
 
                 //var result(loc_0) = new CallInfo()
                 generator.Emit(OpCodes.Newobj, typeof(CallInfo).GetConstructor(Type.EmptyTypes));
@@ -106,6 +108,10 @@ namespace SuperCore
                     generator.Emit(OpCodes.Ldloc_1);
                     generator.Emit(OpCodes.Ldc_I4, k - 1);
                     generator.Emit(OpCodes.Ldarg_S, k);
+                    if (parameter.ParameterType.IsValueType)
+                    {
+                        generator.Emit(OpCodes.Box, parameter.ParameterType);
+                    }
                     generator.Emit(OpCodes.Stelem, parameter.ParameterType);
                     k++;
                 }
@@ -115,14 +121,24 @@ namespace SuperCore
                 generator.Emit(OpCodes.Ldloc_1);
                 generator.Emit(OpCodes.Stfld, typeof(CallInfo).GetField(nameof(CallInfo.Args)));
 
-                //return mSuper.SendCall(info);
+                //var callResult(loc_2) = mSuper.SendCall(info);
                 generator.Emit(OpCodes.Ldarg_0);
                 generator.Emit(OpCodes.Ldfld, fieldBuilder);
                 generator.Emit(OpCodes.Ldloc_0);
                 generator.Emit(OpCodes.Callvirt, typeof(Super).GetMethod(nameof(Super.SendCall), BindingFlags.Instance | BindingFlags.Public));
+                generator.Emit(OpCodes.Stloc_2);
+
+                if (method.ReturnType != typeof (void))
+                {
+                    //return callResult.Result;
+                    generator.Emit(OpCodes.Ldloc_2);
+                    generator.Emit(OpCodes.Ldfld, typeof (CallResult).GetField(nameof(CallResult.Result)));
+                    if (method.ReturnType.IsValueType)
+                        generator.Emit(OpCodes.Unbox, method.ReturnType);
+                }
+
                 generator.Emit(OpCodes.Ret);
-
-
+                
             }
 
             var type = typeBuilder.CreateType();

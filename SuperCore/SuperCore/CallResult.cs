@@ -6,6 +6,6 @@ namespace SuperCore
     {
         public Guid CallID { get; set; }
 
-        public object Result { get; set; }
+        public object Result;
     }
 }
