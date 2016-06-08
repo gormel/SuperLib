@@ -17,6 +17,8 @@ namespace Testes
 
             var generated = superTest.GetInstance<ITestes>();
 
+            generated.add(5);
+
             Console.ReadLine();
         }
     }

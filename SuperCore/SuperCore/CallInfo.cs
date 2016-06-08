@@ -6,8 +6,8 @@ namespace SuperCore
     {
         public Guid CallID { get; } = Guid.NewGuid();
 
-        public string TypeName { get; set; }
-        public string MethodName { get; set; }
-        public object[] Args { get; set; }
+        public string TypeName;
+        public string MethodName;
+        public object[] Args;
     }
 }

@@ -12,7 +12,7 @@ namespace SuperCore
 
         private readonly AssemblyName mAssemblyName = new AssemblyName(Guid.NewGuid().ToString());
 
-        private AssemblyBuilder mAssemblyBuilder;
+        private readonly AssemblyBuilder mAssemblyBuilder;
 
         protected Super()
         {
@@ -30,13 +30,13 @@ namespace SuperCore
             };
         }
 
-        internal abstract CallResult SendCall(CallInfo info);
+        public abstract CallResult SendCall(CallInfo info);
 
         public T GetInstance<T>() where T : class
         {
             if (!typeof(T).IsInterface)
                 throw new ArgumentException("T must be interface.");
-
+            
             var moduleBuilder = mAssemblyBuilder.DefineDynamicModule(Guid.NewGuid().ToString());
             var typeBuilder = moduleBuilder.DefineType(
                 typeof (T).FullName + "_" + Guid.NewGuid(), 
@@ -46,37 +46,88 @@ namespace SuperCore
 
             var fieldBuilder = typeBuilder.DefineField("mSuper", typeof (Super), FieldAttributes.Private);
 
+            var ctor = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis,
+                new[] { typeof (Super) });
+            var ctorIL = ctor.GetILGenerator();
+            ctorIL.Emit(OpCodes.Ldarg_0);
+            ctorIL.Emit(OpCodes.Ldarg_1);
+            ctorIL.Emit(OpCodes.Stfld, fieldBuilder);
+            ctorIL.Emit(OpCodes.Ret);
+
             foreach (var method in typeof(T).GetMethods())
             {
                 var methodBuilder = typeBuilder.DefineMethod(
                     method.Name,
-                    method.Attributes,
+                    MethodAttributes.Public | MethodAttributes.Virtual,
                     method.ReturnType,
                     method.GetParameters().Select(i => i.ParameterType).ToArray());
+                typeBuilder.DefineMethodOverride(methodBuilder, method);
 
                 var generator = methodBuilder.GetILGenerator();
-                
+
                 //var info = new CallInfo();
                 //info.TypeName = typeBuilder.Name;
                 //info.MethodName = method.Name;
                 //args = new object[method.GetParameters().Lenght];
-                //for (int j = 0; j < args.Lenght; j++)
-                //{
-                //    args[j] = getArg(j);
-                //}
+                //args[0] = arg_1
+                //...
+                //args[n] = arg_n
                 //info.Args = args;
                 //return mSuper.SendCall(info);
 
-                generator.DeclareLocal(typeof (object[]));//args
-                generator.DeclareLocal(typeof (CallInfo));
-                generator.Emit(OpCodes.Newobj, typeof(CallInfo));
-                generator.Emit(OpCodes.Newobj, typeof(object[]));
+                generator.DeclareLocal(typeof (CallInfo));//loc_0
+                generator.DeclareLocal(typeof (object[]));//loc_1
+
+                //var result(loc_0) = new CallInfo()
+                generator.Emit(OpCodes.Newobj, typeof(CallInfo).GetConstructor(Type.EmptyTypes));
+                generator.Emit(OpCodes.Stloc_0);
+
+                //result.TypeName = $"{typeBuilder.FullName}";
+                generator.Emit(OpCodes.Ldloc_0);
+                generator.Emit(OpCodes.Ldstr, typeof(T).FullName);
+                generator.Emit(OpCodes.Stfld, typeof(CallInfo).GetField(nameof(CallInfo.TypeName)));
+
+                //result.MethodName = $"{method.Name}";
+                generator.Emit(OpCodes.Ldloc_0);
+                generator.Emit(OpCodes.Ldstr, method.Name);
+                generator.Emit(OpCodes.Stfld, typeof(CallInfo).GetField(nameof(CallInfo.MethodName)));
+
+                //var args(loc_1) = new object[method.GetParameters().Length];
+                generator.Emit(OpCodes.Ldc_I4, method.GetParameters().Length);
+                generator.Emit(OpCodes.Newarr, typeof(object));
+                generator.Emit(OpCodes.Stloc_1);
+
+                //args[0] = arg_1
+                //...
+                //args[n] = arg_n
+                int k = 1;
+                foreach (var parameter in method.GetParameters())
+                {
+                    generator.Emit(OpCodes.Ldloc_1);
+                    generator.Emit(OpCodes.Ldc_I4, k - 1);
+                    generator.Emit(OpCodes.Ldarg_S, k);
+                    generator.Emit(OpCodes.Stelem, parameter.ParameterType);
+                    k++;
+                }
+
+                //info.Args = args;
+                generator.Emit(OpCodes.Ldloc_0);
+                generator.Emit(OpCodes.Ldloc_1);
+                generator.Emit(OpCodes.Stfld, typeof(CallInfo).GetField(nameof(CallInfo.Args)));
+
+                //return mSuper.SendCall(info);
+                generator.Emit(OpCodes.Ldarg_0);
+                generator.Emit(OpCodes.Ldfld, fieldBuilder);
+                generator.Emit(OpCodes.Ldloc_0);
+                generator.Emit(OpCodes.Callvirt, typeof(Super).GetMethod(nameof(Super.SendCall), BindingFlags.Instance | BindingFlags.Public));
+                generator.Emit(OpCodes.Ret);
+
 
             }
 
             var type = typeBuilder.CreateType();
-            var result = Activator.CreateInstance(type);
-            fieldBuilder.SetValue(result, this);
+            var result = Activator.CreateInstance(type, this);
+            //fieldBuilder.SetValue(result, this);
 
             return result as T;
         }
