@@ -64,6 +64,7 @@
     <Compile Include="CallResult.cs" />
     <Compile Include="Super.cs" />
     <Compile Include="SuperClient.cs" />
+    <Compile Include="SuperNet.cs" />
     <Compile Include="SuperServer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SuperTest.cs" />
