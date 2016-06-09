@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -7,6 +8,29 @@ namespace SuperCore
 {
     public static class SocketExtensions
     {
+        public static async Task<byte[]> ReadBytes(this Socket s, int byteCount)
+        {
+            var recived = 0;
+            var buffer = new byte[byteCount];
+            while (recived < byteCount)
+            {
+                var nowRecived = await s.ReceiveTaskAsync(buffer, recived, byteCount - recived, SocketFlags.None);
+                if (nowRecived == 0)
+                    throw new IOException("Disconnected!");
+                recived += nowRecived;
+            }
+            return buffer;
+        }
+
+        public static async Task SendBytes(this Socket s, byte[] data)
+        {
+            var sended = 0;
+            while (sended < data.Length)
+            {
+                sended += await s.SendTaskAsync(data, sended, data.Length - sended, SocketFlags.None);
+            }
+        }
+
         public static Task ConnectTaskAsync(
             this Socket socket, IPAddress[] adresses, int port)
         {

@@ -23,7 +23,9 @@ namespace SuperCore
         {
             var obj = mRegistred[info.TypeName];
             var method = obj.GetType().GetMethod(info.MethodName);
-            var result = method.Invoke(obj, info.Args);
+
+            var result = method.Invoke(obj, 
+                method.GetParameters().Select((p, i) => Convert.ChangeType(info.Args[i], p.ParameterType)).ToArray());
             return new CallResult
             {
                 CallID = info.CallID,

@@ -1,26 +1,19 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 
 namespace SuperCore
 {
     public class SuperServer : SuperNet
     {
-        JsonSerializer mSerializer = JsonSerializer.CreateDefault(new JsonSerializerSettings()
+        private readonly ConcurrentBag<Socket> mClients = new ConcurrentBag<Socket>(); 
+        public void StartListen(int port)
         {
-            TypeNameHandling = TypeNameHandling.All
-        });
-        private ConcurrentBag<Socket> mClients = new ConcurrentBag<Socket>(); 
-        public void StartListen()
-        {
-            var serverSocket = new Socket(SocketType.Stream, ProtocolType.IPv4);
-            serverSocket.Bind(new IPEndPoint(IPAddress.Any, 666));
+            var serverSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            serverSocket.Bind(new IPEndPoint(IPAddress.Any, port));
             serverSocket.Listen(100);
             Task.Run(new Action(async () =>
             {
@@ -39,42 +32,33 @@ namespace SuperCore
             {
                 while (true)
                 {
-                    var lenght = BitConverter.ToInt32(await ReadBytes(client, 4), 0);
-                    var packageData = Encoding.UTF8.GetString(await ReadBytes(client, lenght));
-                    //todo
+                    var resultObj = await GetObject(client);
+                    if (resultObj is CallInfo)
+                    {
+                        var result = Call((CallInfo)resultObj);
+                        var data = GetBytes(result);
+                        await client.SendBytes(BitConverter.GetBytes(data.Length));
+                        await client.SendBytes(data);
+                    }
+                    else if (resultObj is CallResult)
+                    {
+                        ReciveData((CallResult)resultObj);
+                    }
                 }
+            }).ContinueWith(t =>
+            {
+                var ex = t.Exception;
             });
         }
-
-        private async Task<byte[]> ReadBytes(Socket s, int byteCount)
-        {
-            var recived = 0;
-            var buffer = new byte[byteCount];
-            while (recived < byteCount)
-            {
-                var nowRecived = await s.ReceiveTaskAsync(buffer, recived, byteCount - recived, SocketFlags.None);
-                if (nowRecived == 0)
-                    throw new IOException("Disconnected!");
-                recived += nowRecived;
-            }
-            return buffer;
-        }
-
-        private async Task SendBytes(Socket s, byte[] data)
-        {
-            var sended = 0;
-            while (sended < data.Length)
-            {
-                sended += await s.SendTaskAsync(data, sended, data.Length - sended, SocketFlags.None);
-            }
-        }
-
+        
         protected async override void SendData(CallInfo info)
         {
-            var stringBuilder = new StringBuilder();
-            mSerializer.Serialize(new StringWriter(stringBuilder), info);
-            var data = Encoding.UTF8.GetBytes(stringBuilder.ToString());
-            await Task.WhenAll(mClients.Select(c => SendBytes(c, data)));
+            var data = GetBytes(info);
+            await Task.WhenAll(mClients.Select(async c =>
+            {
+                await c.SendBytes(BitConverter.GetBytes(data.Length));
+                await c.SendBytes(data);
+            }));
         }
     }
 }
