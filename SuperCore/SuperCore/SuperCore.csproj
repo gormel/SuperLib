@@ -62,6 +62,7 @@
   <ItemGroup>
     <Compile Include="CallInfo.cs" />
     <Compile Include="CallResult.cs" />
+    <Compile Include="SocketExtensions.cs" />
     <Compile Include="Super.cs" />
     <Compile Include="SuperClient.cs" />
     <Compile Include="SuperNet.cs" />

@@ -22,19 +22,11 @@ namespace SuperCore
 
         protected abstract void SendData(CallInfo info);
 
-        protected abstract void SendData(CallResult result);
-
         protected void ReciveData(CallResult result)
         {
             TaskCompletionSource<CallResult> tcs;
             mWaitingCalls[result.CallID].SetResult(result);
             mWaitingCalls.TryRemove(result.CallID, out tcs);
-        }
-
-        protected void ReciveData(CallInfo info)
-        {
-            var result = Call(info);
-            SendData(result);
         }
     }
 }
