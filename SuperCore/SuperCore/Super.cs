@@ -114,7 +114,7 @@ namespace SuperCore
                     {
                         generator.Emit(OpCodes.Box, parameter.ParameterType);
                     }
-                    generator.Emit(OpCodes.Stelem, parameter.ParameterType);
+                    generator.Emit(OpCodes.Stelem, typeof(object));
                     k++;
                 }
 

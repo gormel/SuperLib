@@ -11,5 +11,6 @@ namespace Testes
         int Foo(int val);
         Task Bar();
         Task<int> Zar(string var);
+        IEnumerable<string> GetStrings(byte count);
     }
 }

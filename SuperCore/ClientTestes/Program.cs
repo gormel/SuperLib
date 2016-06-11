@@ -17,7 +17,8 @@ namespace ClientTestes
                 resultTask.ContinueWith(t => Console.WriteLine($"testesImpl.Zar({t.Result});"));*/
                 try
                 {
-                    var result = testesImpl.Foo(5);
+                    var result = testesImpl.GetStrings(6);
+                    Console.WriteLine($"{string.Join(", ", result)}");
                 }
                 catch (Exception e)
                 {

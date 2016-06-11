@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Testes;
 
@@ -24,6 +26,12 @@ namespace ServerTestes
             await Task.Delay(300);
             Console.WriteLine($"TestesImpl.Zar();");
             return int.Parse(var) + 1;
+        }
+
+        public IEnumerable<string> GetStrings(byte count)
+        {
+            return (from n in Enumerable.Range(0, count)
+                   select new string('$', n)).ToArray();
         }
     }
 }

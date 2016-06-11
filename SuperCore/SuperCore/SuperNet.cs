@@ -29,33 +29,46 @@ namespace SuperCore
             var method = info.GetMethodInfo();
             if (typeof (Task).IsAssignableFrom(method.ReturnType))
             {
-                var taskResultType = method.ReturnType.GenericTypeArguments.SingleOrDefault() ?? typeof (object);
-                dynamic tcs2 = Activator.CreateInstance(typeof (TaskCompletionSource<>).MakeGenericType(taskResultType));
-                tcs.Task.ContinueWith(t =>
-                {
-                    if (t.IsCanceled)
-                        tcs2.SetCanceled();
-                    else if (t.IsFaulted)
-                        tcs2.SetException(t.Exception);
-                    else
-                    {
-                        var res = t.Result;
-                        ConvertResult(res, taskResultType);
-                        object tcs2Obj = tcs2;
-                        tcs2Obj.GetType().GetMethod("SetResult").Invoke(tcs2Obj, new []{ res.Result });
-                        //tcs2.SetResult(res.Result);
-                    }
-
-                });
-                return new CallResult
-                {
-                    CallID = info.CallID,
-                    Result = tcs2.Task
-                };
+                var taskResultType = method.ReturnType.GenericTypeArguments.SingleOrDefault() ?? typeof(object);
+                var callAsyncMethod = typeof(SuperNet).GetMethod(nameof(CallAsyncMethod));
+                return (CallResult)callAsyncMethod
+                    .MakeGenericMethod(taskResultType)
+                    .Invoke(this, new object[] { info, tcs.Task });
             }
             var result = tcs.Task.Result;
             ConvertResult(result, method.ReturnType);
             return result;
+        }
+
+        private CallResult CallAsyncMethod<T>(CallInfo callInfo, Task<CallResult> callTask)
+        {
+            var tcs = new TaskCompletionSource<T>();
+            callTask.ContinueWith(t =>
+            {
+                if (t.IsCanceled)
+                    tcs.SetCanceled();
+                else if (t.IsFaulted)
+                    tcs.SetException(t.Exception);
+                else
+                {
+                    if (callInfo.GetMethodInfo().ReturnType == typeof(Task))
+                    {
+                        tcs.SetResult(default(T));
+                    }
+                    else
+                    {
+                        CallResult callResult = callTask.Result;
+                        ConvertResult(callResult, typeof(T));
+                        tcs.SetResult((T)callResult.Result);
+                    }
+                }
+
+            });
+            return new CallResult
+            {
+                CallID = callInfo.CallID,
+                Result = tcs.Task
+            };
         }
 
         protected void StartReadClient(Socket client)
@@ -134,9 +147,11 @@ namespace SuperCore
 
         private void ConvertResult(CallResult result, Type methodType)
         {
-            if (methodType != result.Result.GetType())
+            var resultData = result.Result;
+            if (methodType != resultData.GetType())
             {
-                result.Result = Convert.ChangeType(result.Result, methodType);
+                if (resultData is IConvertible)
+                    result.Result = Convert.ChangeType(result.Result, methodType);
             }
         }
         
