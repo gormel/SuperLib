@@ -25,31 +25,6 @@ namespace SuperCore
                 }
             }));
         }
-
-        private void StartReadClient(Socket client)
-        {
-            Task.Run(async () =>
-            {
-                while (true)
-                {
-                    var resultObj = await GetObject(client);
-                    if (resultObj is CallInfo)
-                    {
-                        var result = Call((CallInfo)resultObj);
-                        var data = GetBytes(result);
-                        await client.SendBytes(BitConverter.GetBytes(data.Length));
-                        await client.SendBytes(data);
-                    }
-                    else if (resultObj is CallResult)
-                    {
-                        ReciveData((CallResult)resultObj);
-                    }
-                }
-            }).ContinueWith(t =>
-            {
-                var ex = t.Exception;
-            });
-        }
         
         protected async override void SendData(CallInfo info)
         {

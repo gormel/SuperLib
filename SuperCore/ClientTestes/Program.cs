@@ -12,9 +12,18 @@ namespace ClientTestes
             client.Connect("127.0.0.1", 666);
             var testesImpl = client.GetInstance<ITestes>();
             while (Console.ReadLine() != "Exit")
-            {
-                var result = testesImpl.Foo(5);
-                Console.WriteLine(result);
+            {/*
+                var resultTask =  testesImpl.Zar("g");
+                resultTask.ContinueWith(t => Console.WriteLine($"testesImpl.Zar({t.Result});"));*/
+                try
+                {
+                    var result = testesImpl.Foo(5);
+                }
+                catch (Exception e)
+                {
+                    Console.Error.WriteLine(e);
+                }
+
             }
         }
     }

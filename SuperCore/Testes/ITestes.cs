@@ -9,5 +9,7 @@ namespace Testes
     public interface ITestes
     {
         int Foo(int val);
+        Task Bar();
+        Task<int> Zar(string var);
     }
 }

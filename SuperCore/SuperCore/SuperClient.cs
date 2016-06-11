@@ -15,27 +15,7 @@ namespace SuperCore
         {
             mClient = new Socket(SocketType.Stream, ProtocolType.Tcp);
             mClient.Connect(ip, port);
-            Task.Run(async () =>
-            {
-                while (true)
-                {
-                    var resultObj = await GetObject(mClient);
-                    if (resultObj is CallInfo)
-                    {
-                        var result = Call((CallInfo)resultObj);
-                        var data = GetBytes(result);
-                        await mClient.SendBytes(BitConverter.GetBytes(data.Length));
-                        await mClient.SendBytes(data);
-                    }
-                    else if (resultObj is CallResult)
-                    {
-                        ReciveData((CallResult)resultObj);
-                    }
-                }
-            }).ContinueWith(t =>
-            {
-                var ex = t.Exception;
-            });
+            StartReadClient(mClient);
         }
         
         protected async override void SendData(CallInfo info)
