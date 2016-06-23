@@ -5,11 +5,11 @@ using Newtonsoft.Json.Linq;
 
 namespace SuperCore
 {
-    class CustomJsonConverter : JsonConverter
+    class TaskJsonConverter : JsonConverter
     {
         private readonly SuperNet mSuper;
 
-        public CustomJsonConverter(SuperNet super)
+        public TaskJsonConverter(SuperNet super)
         {
             mSuper = super;
         }
@@ -79,12 +79,11 @@ namespace SuperCore
                 return tcs.Task;
             }
             return token.ToObject(reader.ValueType, serializer);
-            //return serializer.Deserialize(reader, reader.ValueType);
         }
 
         public override bool CanConvert(Type objectType)
         {
-            return objectType == typeof(object) || typeof(Task).IsAssignableFrom(objectType) || objectType.IsInterface;
+            return objectType == typeof(object) || typeof(Task).IsAssignableFrom(objectType);
         }
     }
 }

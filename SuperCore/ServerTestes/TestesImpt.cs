@@ -32,7 +32,7 @@ namespace ServerTestes
         public IEnumerable<string> GetStrings(byte count)
         {
             return (from n in Enumerable.Range(0, count)
-                   select new string('$', n)).ToArray();
+                   select new string('$', n));
         }
     }
 }

@@ -26,7 +26,7 @@ namespace SuperCore
             mSerializer = JsonSerializer.CreateDefault(new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.All,
-                Converters = { new CustomJsonConverter(this) },
+                Converters = { new TaskJsonConverter(this), new InterfaceJsonConverter() },
             });
         }
 

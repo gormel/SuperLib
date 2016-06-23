@@ -13,9 +13,10 @@ namespace ClientTestes
             var testesImpl = client.GetInstance<ITestes>();
             while (Console.ReadLine() != "Exit")
             {
+                /*
                 var resultTask = testesImpl.Zar("10");
                 resultTask.ContinueWith(t => Console.WriteLine($"testesImpl.Zar({t.Result});"));
-                /*
+                */
                 try
                 {
                     var result = testesImpl.GetStrings(6);
@@ -24,8 +25,7 @@ namespace ClientTestes
                 catch (Exception e)
                 {
                     Console.Error.WriteLine(e);
-                }*/
-
+                }
             }
         }
     }

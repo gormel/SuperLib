@@ -62,7 +62,8 @@
   <ItemGroup>
     <Compile Include="CallInfo.cs" />
     <Compile Include="CallResult.cs" />
-    <Compile Include="CustomJsonConverter.cs" />
+    <Compile Include="TaskJsonConverter.cs" />
+    <Compile Include="InterfaceJsonConverter.cs" />
     <Compile Include="Result.cs" />
     <Compile Include="SocketExtensions.cs" />
     <Compile Include="Super.cs" />
