@@ -26,7 +26,7 @@ namespace SuperCore
             }));
         }
         
-        protected async override void SendData(CallInfo info)
+        internal async override void SendData(object info)
         {
             var data = GetBytes(info);
             await Task.WhenAll(mClients.Select(async c =>

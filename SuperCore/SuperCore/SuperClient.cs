@@ -1,9 +1,5 @@
 ﻿using System;
-using System.IO;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
 
 namespace SuperCore
 {
@@ -18,7 +14,7 @@ namespace SuperCore
             StartReadClient(mClient);
         }
         
-        protected async override void SendData(CallInfo info)
+        internal async override void SendData(object info)
         {
             if (mClient == null)
             {

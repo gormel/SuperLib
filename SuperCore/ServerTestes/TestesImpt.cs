@@ -23,8 +23,9 @@ namespace ServerTestes
 
         public async Task<int> Zar(string var)
         {
-            await Task.Delay(300);
-            Console.WriteLine($"TestesImpl.Zar();");
+            Console.WriteLine($"start TestesImpl.Zar();");
+            await Task.Delay(1000);
+            Console.WriteLine($"end TestesImpl.Zar();");
             return int.Parse(var) + 1;
         }
 

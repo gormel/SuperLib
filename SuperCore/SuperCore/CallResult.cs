@@ -2,20 +2,12 @@
 
 namespace SuperCore
 {
-    public enum TaskCompletionStatus
-    {
-        NoTask,
-        NoTaskException,
-        Canceled,
-        Exception,
-        Result,
-    }
-    public class CallResult
+    public class CallResult : Result
     {
         public Guid CallID { get; set; }
 
-        public TaskCompletionStatus Status = TaskCompletionStatus.NoTask;
-
+        public bool Exception { get; set; } = false;
+        
         public object Result;
     }
 }

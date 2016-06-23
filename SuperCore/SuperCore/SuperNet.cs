@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
-using System.Runtime.Serialization.Formatters;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -13,62 +12,33 @@ namespace SuperCore
 {
     public abstract class SuperNet : Super
     {
-        private readonly JsonSerializer mSerializer = JsonSerializer.CreateDefault(new JsonSerializerSettings()
-        {
-            TypeNameHandling = TypeNameHandling.All,
-        });
+        private readonly JsonSerializer mSerializer;
 
         private readonly ConcurrentDictionary<Guid, TaskCompletionSource<CallResult>> mWaitingCalls 
             = new ConcurrentDictionary<Guid, TaskCompletionSource<CallResult>>();
-        
+
+        //Guid => TaskCompletitionSource
+        internal readonly ConcurrentDictionary<Guid, dynamic> WaitingTasks 
+            = new ConcurrentDictionary<Guid, dynamic>();
+
+        protected SuperNet()
+        { 
+            mSerializer = JsonSerializer.CreateDefault(new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.All,
+                Converters = { new CustomJsonConverter(this) },
+            });
+        }
+
         public override CallResult SendCall(CallInfo info)
         {
             var tcs = new TaskCompletionSource<CallResult>();
             mWaitingCalls.TryAdd(info.CallID, tcs);
             SendData(info);
             var method = info.GetMethodInfo();
-            if (typeof (Task).IsAssignableFrom(method.ReturnType))
-            {
-                var taskResultType = method.ReturnType.GenericTypeArguments.SingleOrDefault() ?? typeof(object);
-                var callAsyncMethod = typeof(SuperNet).GetMethod(nameof(CallAsyncMethod));
-                return (CallResult)callAsyncMethod
-                    .MakeGenericMethod(taskResultType)
-                    .Invoke(this, new object[] { info, tcs.Task });
-            }
             var result = tcs.Task.Result;
-            ConvertResult(result, method.ReturnType);
+            result.Result = ConvertResult(result.Result, method.ReturnType);
             return result;
-        }
-
-        private CallResult CallAsyncMethod<T>(CallInfo callInfo, Task<CallResult> callTask)
-        {
-            var tcs = new TaskCompletionSource<T>();
-            callTask.ContinueWith(t =>
-            {
-                if (t.IsCanceled)
-                    tcs.SetCanceled();
-                else if (t.IsFaulted)
-                    tcs.SetException(t.Exception);
-                else
-                {
-                    if (callInfo.GetMethodInfo().ReturnType == typeof(Task))
-                    {
-                        tcs.SetResult(default(T));
-                    }
-                    else
-                    {
-                        CallResult callResult = callTask.Result;
-                        ConvertResult(callResult, typeof(T));
-                        tcs.SetResult((T)callResult.Result);
-                    }
-                }
-
-            });
-            return new CallResult
-            {
-                CallID = callInfo.CallID,
-                Result = tcs.Task
-            };
         }
 
         protected void StartReadClient(Socket client)
@@ -91,28 +61,17 @@ namespace SuperCore
                             {
                                 CallID = ((CallInfo)resultObj).CallID,
                                 Result = e,
-                                Status = TaskCompletionStatus.NoTaskException
+                                Exception = true
                             };
                         }
 
-                        var task = result.Result as Task;
-                        if (task != null)
-                        {
-                            try
-                            {
-                                await task;
-                            }
-                            catch {}
-                            DoSmth(result, task);
-                        }
-                        
                         var data = GetBytes(result);
                         await client.SendBytes(BitConverter.GetBytes(data.Length));
                         await client.SendBytes(data);
                     }
-                    else if (resultObj is CallResult)
+                    else if (resultObj is Result)
                     {
-                        ReciveData((CallResult)resultObj);
+                        ReciveData((Result)resultObj);
                     }
                 }
             }).ContinueWith(t =>
@@ -121,62 +80,54 @@ namespace SuperCore
             });
         }
 
-        private void DoSmth(CallResult result, Task task)
+        private static object ConvertResult(object result, Type methodType)
         {
-            if (task.IsCanceled)
+            if (methodType != result.GetType())
             {
-                result.Status = TaskCompletionStatus.Canceled;
+                if (result is IConvertible)
+                    return Convert.ChangeType(result, methodType);
             }
-            else if (task.IsFaulted)
-            {
-                result.Status = TaskCompletionStatus.Exception;
-                result.Result = task.Exception;
-            }
-            else if (task.IsCompleted)
-            {
-                var resultProp = task.GetType().GetProperty("Result");
-                var propResult = resultProp.GetValue(task);
-                result.Status = TaskCompletionStatus.Result;
-                result.Result = propResult;
-            }
-            else
-            {
-                throw new ArgumentException("It's Bad :(, task is not completed!!!");
-            }
-        }
-
-        private void ConvertResult(CallResult result, Type methodType)
-        {
-            var resultData = result.Result;
-            if (methodType != resultData.GetType())
-            {
-                if (resultData is IConvertible)
-                    result.Result = Convert.ChangeType(result.Result, methodType);
-            }
+            return result;
         }
         
-        protected abstract void SendData(CallInfo info);
+        internal abstract void SendData(object info);
+
+        protected void ReciveData(Result result)
+        {
+            dynamic res = result;
+            ReciveData(res);
+        }
 
         protected void ReciveData(CallResult result)
         {
             TaskCompletionSource<CallResult> tcs;
             mWaitingCalls.TryRemove(result.CallID, out tcs);
+            if (result.Exception)
+            {
+                tcs.SetException((Exception)result.Result);
+            }
+            else
+            {
+                tcs.SetResult(result);
+            }
+        }
 
+        protected void ReciveData(TaskResult result)
+        {
+            var tcs = WaitingTasks[result.TaskID];
             switch (result.Status)
             {
                 case TaskCompletionStatus.Canceled:
                     tcs.SetCanceled();
                     break;
-                case TaskCompletionStatus.NoTaskException:
                 case TaskCompletionStatus.Exception:
                     tcs.SetException((Exception)result.Result);
                     break;
-                case TaskCompletionStatus.NoTask:
                 case TaskCompletionStatus.Result:
-                    tcs.SetResult(result);
+                    tcs.SetResult(ConvertResult(result.Result, tcs.GetType().GetGenericArguments()[0]));
                     break;
                 default:
-                    throw new Exception("Holy moly!");
+                    throw new Exception("Holy Moly!");
             }
         }
 
