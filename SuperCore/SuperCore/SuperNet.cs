@@ -6,13 +6,14 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
+using SuperJson;
 
 namespace SuperCore
 {
     public abstract class SuperNet : Super
     {
-        private readonly JsonSerializer mSerializer;
+        //private readonly JsonSerializer mSerializer;
+        private readonly SuperJsonSerializer mSerializer = new SuperJsonSerializer();
 
         private readonly ConcurrentDictionary<Guid, TaskCompletionSource<CallResult>> mWaitingCalls 
             = new ConcurrentDictionary<Guid, TaskCompletionSource<CallResult>>();
@@ -22,12 +23,12 @@ namespace SuperCore
             = new ConcurrentDictionary<Guid, dynamic>();
 
         protected SuperNet()
-        { 
+        { /*
             mSerializer = JsonSerializer.CreateDefault(new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.All,
-                Converters = { new TaskJsonConverter(this), new InterfaceJsonConverter() },
-            });
+                Converters = { new ReadTaskJsonConverter(this), new WriteTaskJsonConverter(this) }
+            });*/
         }
 
         public override CallResult SendCall(CallInfo info)
@@ -37,7 +38,7 @@ namespace SuperCore
             SendData(info);
             var method = info.GetMethodInfo();
             var result = tcs.Task.Result;
-            result.Result = ConvertResult(result.Result, method.ReturnType);
+            result.Result = SuperJsonSerializer.ConvertResult(result.Result, method.ReturnType);
             return result;
         }
 
@@ -79,16 +80,6 @@ namespace SuperCore
                 var ex = t.Exception;
             });
         }
-
-        private static object ConvertResult(object result, Type methodType)
-        {
-            if (methodType != result.GetType())
-            {
-                if (result is IConvertible)
-                    return Convert.ChangeType(result, methodType);
-            }
-            return result;
-        }
         
         internal abstract void SendData(object info);
 
@@ -124,7 +115,7 @@ namespace SuperCore
                     tcs.SetException((Exception)result.Result);
                     break;
                 case TaskCompletionStatus.Result:
-                    tcs.SetResult(ConvertResult(result.Result, tcs.GetType().GetGenericArguments()[0]));
+                    tcs.SetResult(SuperJsonSerializer.ConvertResult(result.Result, tcs.GetType().GetGenericArguments()[0]));
                     break;
                 default:
                     throw new Exception("Holy Moly!");
@@ -136,15 +127,14 @@ namespace SuperCore
             var lenght = BitConverter.ToInt32(await socket.ReadBytes(4), 0);
             var packageData = Encoding.UTF8.GetString(await socket.ReadBytes(lenght));
             Trace.WriteLine(packageData);
-            var result = mSerializer.Deserialize(new JsonTextReader(new StringReader(packageData)));
+            var result = mSerializer.Deserialize(packageData);
             return result;
         }
 
         protected byte[] GetBytes(object obj)
         {
-            var stringBuilder = new StringBuilder();
-            mSerializer.Serialize(new StringWriter(stringBuilder), obj);
-            return Encoding.UTF8.GetBytes(stringBuilder.ToString());
+            var json = mSerializer.Serialize(obj);
+            return Encoding.UTF8.GetBytes(json);
         }
     }
 }
