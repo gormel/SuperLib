@@ -48,6 +48,7 @@
     <Compile Include="NetData\CallInfo.cs" />
     <Compile Include="NetData\CallResult.cs" />
     <Compile Include="NetData\Result.cs" />
+    <Compile Include="SerializeCustomers\InterfaceSerializeCustomer.cs" />
     <Compile Include="SerializeCustomers\TaskSerializeCustomer.cs" />
     <Compile Include="SocketExtensions.cs" />
     <Compile Include="Core\Super.cs" />

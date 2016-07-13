@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using SuperCore.NetData;
+using SuperJson;
 
 namespace SuperCore.Core
 {
@@ -26,7 +27,7 @@ namespace SuperCore.Core
             var method = obj.GetType().GetMethod(info.MethodName);
 
             var result = method.Invoke(obj, 
-                method.GetParameters().Select((p, i) => Convert.ChangeType(info.Args[i], p.ParameterType)).ToArray());
+                method.GetParameters().Select((p, i) => SuperJsonSerializer.ConvertResult(info.Args[i], p.ParameterType)).ToArray());
             return new CallResult
             {
                 CallID = info.CallID,
@@ -36,7 +37,7 @@ namespace SuperCore.Core
 
         public abstract CallResult SendCall(CallInfo info);
 
-        public T GetInstance<T>() where T : class
+        public T GetInstance<T>(Guid id = new Guid()) where T : class
         {
             if (!typeof(T).IsInterface)
                 throw new ArgumentException("T must be interface.");

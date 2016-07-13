@@ -22,7 +22,7 @@ namespace SuperCore.SerializeCustomers
 
         public override string Serialize(object obj, SuperJsonSerializer serializer)
         {
-            var typedValue = obj as Task;
+            var typedValue = (Task)obj;
 
             var resultType = obj.GetType().GetGenericArguments()[0];
             var id = Guid.NewGuid();
