@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SuperCore
+namespace SuperCore.NetData
 {
     public enum TaskCompletionStatus
     {

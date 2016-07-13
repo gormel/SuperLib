@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
@@ -29,42 +28,6 @@ namespace SuperCore
             {
                 sended += await s.SendTaskAsync(data, sended, data.Length - sended, SocketFlags.None);
             }
-        }
-
-        public static Task ConnectTaskAsync(
-            this Socket socket, IPAddress[] adresses, int port)
-        {
-            var tcs = new TaskCompletionSource<bool>(socket);
-            socket.BeginConnect(adresses, port, iar =>
-            {
-                var t = (TaskCompletionSource<bool>)iar.AsyncState;
-                var s = (Socket)t.Task.AsyncState;
-                try
-                {
-                    s.EndConnect(iar);
-                    t.TrySetResult(true);
-                }
-                catch (Exception exc) { t.TrySetException(exc); }
-            }, tcs);
-            return tcs.Task;
-        }
-
-        public static Task DisconnectTaskAsync(
-            this Socket socket, bool reuseSocket)
-        {
-            var tcs = new TaskCompletionSource<bool>(socket);
-            socket.BeginDisconnect(reuseSocket, iar =>
-            {
-                var t = (TaskCompletionSource<bool>)iar.AsyncState;
-                var s = (Socket)t.Task.AsyncState;
-                try
-                {
-                    s.EndDisconnect(iar);
-                    t.TrySetResult(true);
-                }
-                catch (Exception exc) { t.TrySetException(exc); }
-            }, tcs);
-            return tcs.Task;
         }
 
         public static Task<int> ReceiveTaskAsync(

@@ -1,18 +1,18 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using SuperCore.DeserializeCustomers;
+using SuperCore.NetData;
+using SuperCore.SerializeCustomers;
 using SuperJson;
 
-namespace SuperCore
+namespace SuperCore.Core
 {
     public abstract class SuperNet : Super
     {
-        //private readonly JsonSerializer mSerializer;
         private readonly SuperJsonSerializer mSerializer = new SuperJsonSerializer();
 
         private readonly ConcurrentDictionary<Guid, TaskCompletionSource<CallResult>> mWaitingCalls 
@@ -23,12 +23,9 @@ namespace SuperCore
             = new ConcurrentDictionary<Guid, dynamic>();
 
         protected SuperNet()
-        { /*
-            mSerializer = JsonSerializer.CreateDefault(new JsonSerializerSettings
-            {
-                TypeNameHandling = TypeNameHandling.All,
-                Converters = { new ReadTaskJsonConverter(this), new WriteTaskJsonConverter(this) }
-            });*/
+        {
+            mSerializer.SerializeCustomers.Add(new TaskSerializeCustomer(this));
+            mSerializer.DeserializeCustomers.Add(new TaskDeserializeCustomer(this));
         }
 
         public override CallResult SendCall(CallInfo info)

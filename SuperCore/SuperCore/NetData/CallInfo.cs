@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Reflection;
 
-namespace SuperCore
+namespace SuperCore.NetData
 {
     public class CallInfo
     {

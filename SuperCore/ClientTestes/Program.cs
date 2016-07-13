@@ -1,5 +1,6 @@
 ﻿using System;
 using SuperCore;
+using SuperCore.Core;
 using Testes;
 
 namespace ClientTestes

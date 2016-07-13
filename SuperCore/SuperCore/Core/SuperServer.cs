@@ -5,7 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
-namespace SuperCore
+namespace SuperCore.Core
 {
     public class SuperServer : SuperNet
     {
