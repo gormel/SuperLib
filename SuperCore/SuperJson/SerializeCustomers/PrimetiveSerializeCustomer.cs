@@ -11,7 +11,7 @@ namespace SuperJson.SerializeCustomers
             return obj.GetType().IsPrimitive;
         }
 
-        public override JToken Serialize(object obj, SuperJsonSerializer serializer)
+        public override JToken Serialize(object obj, Type declaredType, SuperJsonSerializer serializer)
         {
             return new JValue(obj);
         }

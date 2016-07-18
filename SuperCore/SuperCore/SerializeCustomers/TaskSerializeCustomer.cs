@@ -21,7 +21,7 @@ namespace SuperCore.SerializeCustomers
             return obj is Task;
         }
 
-        public override JToken Serialize(object obj, SuperJsonSerializer serializer)
+        public override JToken Serialize(object obj, Type declaredType, SuperJsonSerializer serializer)
         {
             var typedValue = (Task)obj;
 

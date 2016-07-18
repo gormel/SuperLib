@@ -32,9 +32,16 @@ namespace SuperCore.Core
             
             await Task.WhenAll(mClients.Select(async c =>
             {
+                if (!c.Connected)
+                    return;
                 await c.SendBytes(BitConverter.GetBytes(data.Length));
                 await c.SendBytes(data);
             }));
+        }
+
+        protected override void ClientDisconnected(Socket client)
+        {
+            
         }
     }
 }

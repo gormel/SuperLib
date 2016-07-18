@@ -25,5 +25,10 @@ namespace SuperCore.Core
             await mClient.SendBytes(BitConverter.GetBytes(data.Length));
             await mClient.SendBytes(data);
         }
+
+        protected override void ClientDisconnected(Socket client)
+        {
+            mClient = null;
+        }
     }
 }

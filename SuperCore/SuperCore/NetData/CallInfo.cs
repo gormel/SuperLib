@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Linq;
 using System.Reflection;
+using SuperCore.Core;
 
 namespace SuperCore.NetData
 {
     public class CallInfo
     {
         public Guid CallID = Guid.NewGuid();
-        public Guid ClassID = Guid.Empty;
+        public Guid ClassID;
 
         public string TypeName;
         public string MethodName;
@@ -18,12 +19,13 @@ namespace SuperCore.NetData
         {
             if (mType == null)
             {
-                mType =
-                    AppDomain.CurrentDomain.GetAssemblies()
-                        .SelectMany(a => a.GetTypes())
-                        .FirstOrDefault(t => t.FullName == TypeName);
+                mType = Type.GetType(TypeName, true);
             }
-            return mType?.GetMethod(MethodName);
+            if (mType == null)
+                return null;
+
+            var methods = Super.CollectMethods(mType);
+            return methods.FirstOrDefault(i => i.Name == MethodName);
         }
     }
 }

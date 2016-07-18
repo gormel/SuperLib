@@ -12,5 +12,7 @@ namespace Testes
         Task Bar();
         Task<int> Zar(string var);
         IEnumerable<string> GetStrings(byte count);
+        ITestes Har();
+        Guid GetId();
     }
 }

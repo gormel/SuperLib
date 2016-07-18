@@ -10,7 +10,7 @@ namespace SuperJson.SerializeCustomers
             return obj == null;
         }
 
-        public override JToken Serialize(object obj, SuperJsonSerializer serializer)
+        public override JToken Serialize(object obj, Type declaredType, SuperJsonSerializer serializer)
         {
             return new JValue((object)null);
         }

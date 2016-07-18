@@ -11,6 +11,6 @@ namespace SuperJson
     {
         public abstract bool UseCustomer(object obj, Type declaredType);
 
-        public abstract JToken Serialize(object obj, SuperJsonSerializer serializer);
+        public abstract JToken Serialize(object obj, Type declaredType, SuperJsonSerializer serializer);
     }
 }

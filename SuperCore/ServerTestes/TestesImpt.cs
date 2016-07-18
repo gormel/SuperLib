@@ -8,6 +8,7 @@ namespace ServerTestes
 {
     class TestesImpt : ITestes
     {
+        private Guid mId = Guid.NewGuid();
         public int Foo(int val)
         {
             Console.WriteLine($"TestesImpl.Foo({val});");
@@ -33,6 +34,16 @@ namespace ServerTestes
         {
             return (from n in Enumerable.Range(0, count)
                    select new string('$', n));
+        }
+
+        public ITestes Har()
+        {
+            return this;
+        }
+
+        public Guid GetId()
+        {
+            return mId;
         }
     }
 }

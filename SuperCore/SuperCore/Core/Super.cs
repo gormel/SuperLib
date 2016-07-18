@@ -12,6 +12,8 @@ namespace SuperCore.Core
     {
         private readonly Dictionary<string, object> mRegistred = new Dictionary<string, object>();
 
+        private readonly Dictionary<Guid, object> mIdRegistred = new Dictionary<Guid, object>(); 
+
         private readonly AssemblyName mAssemblyName = new AssemblyName(Guid.NewGuid().ToString());
 
         private readonly AssemblyBuilder mAssemblyBuilder;
@@ -23,11 +25,18 @@ namespace SuperCore.Core
 
         protected CallResult Call(CallInfo info)
         {
-            var obj = mRegistred[info.TypeName];
+            var obj = info.ClassID == Guid.Empty ? mRegistred[info.TypeName] : mIdRegistred[info.ClassID];
             var method = obj.GetType().GetMethod(info.MethodName);
 
             var result = method.Invoke(obj, method.GetParameters()
                 .Select((p, i) => SuperJsonSerializer.ConvertResult(info.Args[i], p.ParameterType)).ToArray());
+            
+            result = new DeclarationWrapper
+            {
+                Instance = result,
+                TypeName = method.ReturnType.AssemblyQualifiedName
+            };
+
             return new CallResult
             {
                 CallID = info.CallID,
@@ -37,6 +46,25 @@ namespace SuperCore.Core
 
         public abstract CallResult SendCall(CallInfo info);
 
+        internal static List<MethodInfo> CollectMethods(Type interfaceType)
+        {
+            var result = new List<MethodInfo>();
+
+            if (interfaceType == null)
+                return result;
+
+            foreach (var type in interfaceType.GetInterfaces())
+            {
+                result.AddRange(CollectMethods(type));
+            }
+
+            result.AddRange(CollectMethods(interfaceType.BaseType));
+
+            result.AddRange(interfaceType.GetMethods());
+
+            return result;
+        } 
+
         public T GetInstance<T>(Guid id = new Guid()) where T : class
         {
             if (!typeof(T).IsInterface)
@@ -44,12 +72,12 @@ namespace SuperCore.Core
             
             var moduleBuilder = mAssemblyBuilder.DefineDynamicModule(Guid.NewGuid().ToString());
             var typeBuilder = moduleBuilder.DefineType(
-                typeof (T).FullName + "_" + Guid.NewGuid(), 
+                typeof (T).Name + "_" + Guid.NewGuid(), 
                 TypeAttributes.Class | TypeAttributes.Public, 
                 typeof(object), 
                 new []{ typeof(T) });
 
-            typeBuilder.DefineField("ID", typeof (Guid), FieldAttributes.Public);
+            var idFieldBuilder = typeBuilder.DefineField("ID", typeof (Guid), FieldAttributes.Public);
 
             var superFieldBuilder = typeBuilder.DefineField("mSuper", typeof (Super), FieldAttributes.Private);
 
@@ -61,26 +89,27 @@ namespace SuperCore.Core
             ctorIL.Emit(OpCodes.Stfld, superFieldBuilder);
             ctorIL.Emit(OpCodes.Ret);
 
-            foreach (var method in typeof(T).GetMethods())
+            foreach (var method in CollectMethods(typeof(T)))
             {
                 var methodBuilder = typeBuilder.DefineMethod(
-                    method.Name,
-                    MethodAttributes.Public | MethodAttributes.Virtual,
+                    method.DeclaringType == typeof(T) ? method.Name : $"{method.DeclaringType.Name}.{method.Name}",
+                    MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+                    CallingConventions.Standard | CallingConventions.HasThis,
                     method.ReturnType,
                     method.GetParameters().Select(i => i.ParameterType).ToArray());
-                typeBuilder.DefineMethodOverride(methodBuilder, method);
 
                 var generator = methodBuilder.GetILGenerator();
 
                 //var info = new CallInfo();
-                //info.TypeName = typeBuilder.Name;
+                //info.TypeName = typeof(T).AssemblyQualifiedName;
                 //info.MethodName = method.Name;
                 //args = new object[method.GetParameters().Lenght];
                 //args[0] = arg_1
                 //...
                 //args[n] = arg_n
                 //info.Args = args;
-                //return mSuper.SendCall(info);
+                //info.ClassID = this.ID;
+                //return this.mSuper.SendCall(info);
 
                 generator.DeclareLocal(typeof (CallInfo));//loc_0
                 generator.DeclareLocal(typeof (object[]));//loc_1
@@ -90,12 +119,12 @@ namespace SuperCore.Core
                 generator.Emit(OpCodes.Newobj, typeof(CallInfo).GetConstructor(Type.EmptyTypes));
                 generator.Emit(OpCodes.Stloc_0);
 
-                //result.TypeName = $"{typeBuilder.FullName}";
+                //info.TypeName = $"{typeof(T).AssemblyQualifiedName}";
                 generator.Emit(OpCodes.Ldloc_0);
-                generator.Emit(OpCodes.Ldstr, typeof(T).FullName);
+                generator.Emit(OpCodes.Ldstr, typeof(T).AssemblyQualifiedName);
                 generator.Emit(OpCodes.Stfld, typeof(CallInfo).GetField(nameof(CallInfo.TypeName)));
 
-                //result.MethodName = $"{method.Name}";
+                //info.MethodName = $"{method.Name}";
                 generator.Emit(OpCodes.Ldloc_0);
                 generator.Emit(OpCodes.Ldstr, method.Name);
                 generator.Emit(OpCodes.Stfld, typeof(CallInfo).GetField(nameof(CallInfo.MethodName)));
@@ -126,8 +155,15 @@ namespace SuperCore.Core
                 generator.Emit(OpCodes.Ldloc_0);
                 generator.Emit(OpCodes.Ldloc_1);
                 generator.Emit(OpCodes.Stfld, typeof(CallInfo).GetField(nameof(CallInfo.Args)));
+               
+                //info.ClassID = this.ID;
+                generator.Emit(OpCodes.Ldloc_0);
+                generator.Emit(OpCodes.Ldarg_0);
+                generator.Emit(OpCodes.Ldfld, idFieldBuilder);
+                generator.Emit(OpCodes.Stfld, typeof(CallInfo).GetField(nameof(CallInfo.ClassID)));
+               
 
-                //var callResult(loc_2) = mSuper.SendCall(info);
+                //var callResult(loc_2) = this.mSuper.SendCall(info);
                 generator.Emit(OpCodes.Ldarg_0);
                 generator.Emit(OpCodes.Ldfld, superFieldBuilder);
                 generator.Emit(OpCodes.Ldloc_0);
@@ -144,7 +180,8 @@ namespace SuperCore.Core
                 }
 
                 generator.Emit(OpCodes.Ret);
-                
+                typeBuilder.DefineMethodOverride(methodBuilder, method);
+
             }
 
             var type = typeBuilder.CreateType();
@@ -154,13 +191,17 @@ namespace SuperCore.Core
             return result as T;
         }
 
-        public void Register<T>(T inst) where T : class
+        public void Register<T>(T inst, Guid id = new Guid()) where T : class
         {
             if (!typeof(T).IsInterface)
                 throw new ArgumentException("T must be interface.");
-            
-            mRegistred.Add(typeof(T).FullName, inst);
+
+            if (id != Guid.Empty)
+            {
+                mIdRegistred.Add(id, inst);
+                return;
+            }
+            mRegistred.Add(typeof(T).AssemblyQualifiedName, inst);
         }
     }
 }
-

@@ -31,7 +31,7 @@ namespace SuperJson
                 if (!customer.UseCustomer(obj, declaredType))
                     continue;
 
-                return customer.Serialize(obj, this);
+                return customer.Serialize(obj, declaredType, this);
             }
 
             var objType = obj.GetType();
@@ -89,6 +89,8 @@ namespace SuperJson
         {
             switch (obj.Type)
             {
+                case JTokenType.Null:
+                    return null;
                 case JTokenType.Array:
                     var arr = (JArray)obj;
                     var resultArr = new object[arr.Count];
@@ -147,6 +149,8 @@ namespace SuperJson
 
         public static object ConvertResult(object result, Type methodType)
         {
+            if (result == null)
+                return null;
             if (result.GetType().IsArray && methodType.IsArray)
             {
                 var arr = (Array)result;

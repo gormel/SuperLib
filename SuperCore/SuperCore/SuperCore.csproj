@@ -44,10 +44,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DeserializeCustomers\InterfaceDeserializeCustomer.cs" />
     <Compile Include="DeserializeCustomers\TaskDeserializeCustomer.cs" />
+    <Compile Include="InterfaceWrapper.cs" />
     <Compile Include="NetData\CallInfo.cs" />
     <Compile Include="NetData\CallResult.cs" />
     <Compile Include="NetData\Result.cs" />
+    <Compile Include="SerializeCustomers\DeclarationWrapperSerializeCustomer.cs" />
     <Compile Include="SerializeCustomers\InterfaceSerializeCustomer.cs" />
     <Compile Include="SerializeCustomers\TaskSerializeCustomer.cs" />
     <Compile Include="SocketExtensions.cs" />
@@ -56,7 +59,6 @@
     <Compile Include="Core\SuperNet.cs" />
     <Compile Include="Core\SuperServer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SuperTest.cs" />
     <Compile Include="NetData\TaskResult.cs" />
   </ItemGroup>
   <ItemGroup>

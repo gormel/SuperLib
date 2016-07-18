@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,7 +17,7 @@ namespace SuperCore.Core
         private readonly ConcurrentDictionary<Guid, TaskCompletionSource<CallResult>> mWaitingCalls 
             = new ConcurrentDictionary<Guid, TaskCompletionSource<CallResult>>();
 
-        //Guid => TaskCompletitionSource
+        //Guid => TaskCompletitionSource<?>
         internal readonly ConcurrentDictionary<Guid, dynamic> WaitingTasks 
             = new ConcurrentDictionary<Guid, dynamic>();
 
@@ -26,6 +25,11 @@ namespace SuperCore.Core
         {
             mSerializer.SerializeCustomers.Add(new TaskSerializeCustomer(this));
             mSerializer.DeserializeCustomers.Add(new TaskDeserializeCustomer(this));
+
+            mSerializer.SerializeCustomers.Add(new InterfaceSerializeCustomer(this));
+            mSerializer.DeserializeCustomers.Add(new InterfaceDeserializeCustomer(this));
+
+            mSerializer.SerializeCustomers.Add(new DeclarationWrapperSerializeCustomer());
         }
 
         public override CallResult SendCall(CallInfo info)
@@ -75,10 +79,13 @@ namespace SuperCore.Core
             }).ContinueWith(t =>
             {
                 var ex = t.Exception;
+                ClientDisconnected(client);
             });
         }
         
         internal abstract void SendData(object info);
+
+        protected abstract void ClientDisconnected(Socket client);
 
         protected void ReciveData(Result result)
         {
@@ -123,7 +130,6 @@ namespace SuperCore.Core
         {
             var lenght = BitConverter.ToInt32(await socket.ReadBytes(4), 0);
             var packageData = Encoding.UTF8.GetString(await socket.ReadBytes(lenght));
-            Trace.WriteLine(packageData);
             var result = mSerializer.Deserialize(packageData);
             return result;
         }
