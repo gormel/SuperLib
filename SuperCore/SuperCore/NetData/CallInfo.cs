@@ -7,6 +7,7 @@ namespace SuperCore.NetData
     public class CallInfo
     {
         public Guid CallID = Guid.NewGuid();
+        public Guid ClassID = Guid.Empty;
 
         public string TypeName;
         public string MethodName;

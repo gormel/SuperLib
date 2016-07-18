@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace SuperJson.SerializeCustomers
 {
@@ -13,18 +14,15 @@ namespace SuperJson.SerializeCustomers
             return obj.GetType().IsArray;
         }
 
-        public override string Serialize(object obj, SuperJsonSerializer serializer)
+        public override JToken Serialize(object obj, SuperJsonSerializer serializer)
         {
             var arr = (Array)obj;
-            var result = "[";
-            for (int i = 0; i < arr.Length; i++)
+            var result = new JArray();
+            for (var i = 0; i < arr.Length; i++)
             {
                 var elem = arr.GetValue(i);
-                result += serializer.Serialize(elem);
-                if (i < arr.Length - 1)
-                    result += ",";
+                result.Add(serializer.Serialize(elem, obj.GetType().GetElementType()));
             }
-            result += "]";
             return result;
         }
     }

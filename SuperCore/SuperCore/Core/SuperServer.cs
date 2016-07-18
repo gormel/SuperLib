@@ -29,6 +29,7 @@ namespace SuperCore.Core
         internal async override void SendData(object info)
         {
             var data = GetBytes(info);
+            
             await Task.WhenAll(mClients.Select(async c =>
             {
                 await c.SendBytes(BitConverter.GetBytes(data.Length));

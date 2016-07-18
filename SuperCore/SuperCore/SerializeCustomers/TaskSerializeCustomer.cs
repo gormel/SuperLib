@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using SuperCore.Core;
 using SuperCore.NetData;
 using SuperJson;
@@ -20,7 +21,7 @@ namespace SuperCore.SerializeCustomers
             return obj is Task;
         }
 
-        public override string Serialize(object obj, SuperJsonSerializer serializer)
+        public override JToken Serialize(object obj, SuperJsonSerializer serializer)
         {
             var typedValue = (Task)obj;
 
@@ -50,15 +51,13 @@ namespace SuperCore.SerializeCustomers
                 mSuper.SendData(taskResult);
             });
 
-            var result = "{";
-
-            result += $"\"$type\":\"TaskWrapper\",";
-
-            result += $"\"ID\":\"{id}\",";
-
-            result += $"\"ResultType\":\"{resultType.AssemblyQualifiedName}\"";
-
-            result += "}";
+            var result = new JObject
+            {
+                { "$type", "TaskWrapper" },
+                { "ID", id.ToString() },
+                { "ResultType", resultType.AssemblyQualifiedName }
+            };
+            
             return result;
         }
     }

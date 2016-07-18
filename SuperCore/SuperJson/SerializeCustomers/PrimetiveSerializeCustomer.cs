@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using Newtonsoft.Json.Linq;
 
 namespace SuperJson.SerializeCustomers
 {
@@ -10,11 +11,9 @@ namespace SuperJson.SerializeCustomers
             return obj.GetType().IsPrimitive;
         }
 
-        public override string Serialize(object obj, SuperJsonSerializer serializer)
+        public override JToken Serialize(object obj, SuperJsonSerializer serializer)
         {
-            if (obj is IFormattable)
-                return ((IFormattable)obj).ToString(null, CultureInfo.InvariantCulture).ToLower();
-            return obj.ToString().ToLower();
+            return new JValue(obj);
         }
     }
 }

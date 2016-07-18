@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace SuperJson
 {
@@ -10,6 +11,6 @@ namespace SuperJson
     {
         public abstract bool UseCustomer(object obj, Type declaredType);
 
-        public abstract string Serialize(object obj, SuperJsonSerializer serializer);
+        public abstract JToken Serialize(object obj, SuperJsonSerializer serializer);
     }
 }

@@ -21,10 +21,10 @@ namespace SuperJson
         
         public string Serialize(object obj)
         {
-            return Serialize(obj, null);
+            return Serialize(obj, null).ToString();
         }
 
-        private string Serialize(object obj, Type declaredType)
+        public JToken Serialize(object obj, Type declaredType)
         {
             foreach (var customer in SerializeCustomers)
             {
@@ -36,15 +36,13 @@ namespace SuperJson
 
             var objType = obj.GetType();
             
-            string result = "";
+            var result = new JObject();
 
-            var bindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+            const BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
             var members = objType.GetMembers(bindingFlags);
-
-            result += "{";
-
-            result += $"\"$type\":\"{objType.AssemblyQualifiedName}\",";
-
+            
+            result.Add("$type", new JValue(objType.AssemblyQualifiedName));
+            
             foreach (var member in members)
             {
                 var attrs = member.GetCustomAttributes(typeof (CompilerGeneratedAttribute));
@@ -76,12 +74,8 @@ namespace SuperJson
                 if (memberValue == null)
                     continue;
 
-                result += $"\"{member.Name}\":{Serialize(memberValue, declaredMemberType)},";
+                result.Add(member.Name, Serialize(memberValue, declaredMemberType));
             }
-
-            result = result.Substring(0, result.LastIndexOf(",", StringComparison.Ordinal));
-
-            result += "}";
 
             return result;
         }

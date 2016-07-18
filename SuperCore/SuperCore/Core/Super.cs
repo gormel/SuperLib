@@ -26,8 +26,8 @@ namespace SuperCore.Core
             var obj = mRegistred[info.TypeName];
             var method = obj.GetType().GetMethod(info.MethodName);
 
-            var result = method.Invoke(obj, 
-                method.GetParameters().Select((p, i) => SuperJsonSerializer.ConvertResult(info.Args[i], p.ParameterType)).ToArray());
+            var result = method.Invoke(obj, method.GetParameters()
+                .Select((p, i) => SuperJsonSerializer.ConvertResult(info.Args[i], p.ParameterType)).ToArray());
             return new CallResult
             {
                 CallID = info.CallID,
@@ -49,14 +49,16 @@ namespace SuperCore.Core
                 typeof(object), 
                 new []{ typeof(T) });
 
-            var fieldBuilder = typeBuilder.DefineField("mSuper", typeof (Super), FieldAttributes.Private);
+            typeBuilder.DefineField("ID", typeof (Guid), FieldAttributes.Public);
+
+            var superFieldBuilder = typeBuilder.DefineField("mSuper", typeof (Super), FieldAttributes.Private);
 
             var ctor = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis,
                 new[] { typeof (Super) });
             var ctorIL = ctor.GetILGenerator();
             ctorIL.Emit(OpCodes.Ldarg_0);
             ctorIL.Emit(OpCodes.Ldarg_1);
-            ctorIL.Emit(OpCodes.Stfld, fieldBuilder);
+            ctorIL.Emit(OpCodes.Stfld, superFieldBuilder);
             ctorIL.Emit(OpCodes.Ret);
 
             foreach (var method in typeof(T).GetMethods())
@@ -127,7 +129,7 @@ namespace SuperCore.Core
 
                 //var callResult(loc_2) = mSuper.SendCall(info);
                 generator.Emit(OpCodes.Ldarg_0);
-                generator.Emit(OpCodes.Ldfld, fieldBuilder);
+                generator.Emit(OpCodes.Ldfld, superFieldBuilder);
                 generator.Emit(OpCodes.Ldloc_0);
                 generator.Emit(OpCodes.Callvirt, typeof(Super).GetMethod(nameof(Super.SendCall), BindingFlags.Instance | BindingFlags.Public));
                 generator.Emit(OpCodes.Stloc_2);
@@ -147,7 +149,7 @@ namespace SuperCore.Core
 
             var type = typeBuilder.CreateType();
             var result = Activator.CreateInstance(type, this);
-            //fieldBuilder.SetValue(result, this);
+            type.GetField("ID").SetValue(result, id);
 
             return result as T;
         }
