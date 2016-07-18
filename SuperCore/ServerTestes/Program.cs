@@ -9,7 +9,7 @@ namespace ServerTestes
     {
         static void Main(string[] args)
         {
-            var impl = new TestesImpt();
+            var impl = new TestesImpl();
             var server = new SuperServer();
             server.StartListen(666);
             server.Register<ITestes>(impl);

@@ -14,5 +14,7 @@ namespace Testes
         IEnumerable<string> GetStrings(byte count);
         ITestes Har();
         Guid GetId();
+        int TestesProp { get; set; }
+        event Action Act;
     }
 }
