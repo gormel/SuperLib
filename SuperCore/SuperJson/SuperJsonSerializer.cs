@@ -85,7 +85,7 @@ namespace SuperJson
             return Deserialize(JToken.Parse(json), null);
         }
 
-        private object Deserialize(JToken obj, Type declaredType)
+        public object Deserialize(JToken obj, Type declaredType)
         {
             switch (obj.Type)
             {

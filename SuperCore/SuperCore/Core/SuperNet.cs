@@ -7,6 +7,7 @@ using SuperCore.DeserializeCustomers;
 using SuperCore.NetData;
 using SuperCore.SerializeCustomers;
 using SuperJson;
+using System.Diagnostics;
 
 namespace SuperCore.Core
 {
@@ -29,6 +30,9 @@ namespace SuperCore.Core
             mSerializer.SerializeCustomers.Add(new InterfaceSerializeCustomer(this));
             mSerializer.DeserializeCustomers.Add(new InterfaceDeserializeCustomer(this));
 
+			mSerializer.SerializeCustomers.Add (new DelegateSerializeCustomer (this));
+			mSerializer.DeserializeCustomers.Add (new DelegateDeserializeCustomer (this));
+
             mSerializer.SerializeCustomers.Add(new DeclarationWrapperSerializeCustomer());
         }
 
@@ -50,35 +54,29 @@ namespace SuperCore.Core
                 while (true)
                 {
                     var resultObj = await GetObject(client);
-                    if (resultObj is CallInfo)
-                    {
-                        CallResult result;
-                        try
-                        {
-                            result = Call((CallInfo)resultObj);
-                        }
-                        catch (Exception e)
-                        {
-                            result = new CallResult
-                            {
-                                CallID = ((CallInfo)resultObj).CallID,
-                                Result = e,
-                                Exception = true
-                            };
-                        }
+					Task.Run(async () => 
+					{
+	                    if (resultObj is Call)
+	                    {
+							Result result;
+							var send = ReciveCall((Call)resultObj, out result);
+							if (!send)
+								return;
 
-                        var data = GetBytes(result);
-                        await client.SendBytes(BitConverter.GetBytes(data.Length));
-                        await client.SendBytes(data);
-                    }
-                    else if (resultObj is Result)
-                    {
-                        ReciveData((Result)resultObj);
-                    }
+	                        var data = GetBytes(result);
+	                        await client.SendBytes(BitConverter.GetBytes(data.Length));
+	                        await client.SendBytes(data);
+	                    }
+	                    else if (resultObj is Result)
+	                    {
+	                        ReciveData((Result)resultObj);
+	                    }
+					});
                 }
             }).ContinueWith(t =>
             {
                 var ex = t.Exception;
+				Trace.WriteLine(ex);
                 ClientDisconnected(client);
             });
         }
@@ -86,6 +84,35 @@ namespace SuperCore.Core
         internal abstract void SendData(object info);
 
         protected abstract void ClientDisconnected(Socket client);
+
+		protected bool ReciveCall(Call info, out Result result)
+		{
+			dynamic call = info;
+			return ReciveCall(call, out result);
+		}
+
+		protected bool ReciveCall(CallInfo info, out Result result)
+		{
+			result = null;
+			if (info.ClassID != Guid.Empty && !mIdRegistred.ContainsKey (info.ClassID))
+				return false;
+			if (info.ClassID == Guid.Empty && !mRegistred.ContainsKey (info.TypeName))
+				return false;
+			try
+			{
+				result = Call(info);
+			}
+			catch (Exception e)
+			{
+				result = new CallResult
+				{
+					CallID = (info).CallID,
+					Result = e,
+					Exception = true
+				};
+			}
+			return true;
+		}
 
         protected void ReciveData(Result result)
         {
@@ -96,7 +123,8 @@ namespace SuperCore.Core
         protected void ReciveData(CallResult result)
         {
             TaskCompletionSource<CallResult> tcs;
-            mWaitingCalls.TryRemove(result.CallID, out tcs);
+			if (!mWaitingCalls.TryRemove (result.CallID, out tcs))
+				return;
             if (result.Exception)
             {
                 tcs.SetException((Exception)result.Result);
@@ -119,7 +147,8 @@ namespace SuperCore.Core
                     tcs.SetException((Exception)result.Result);
                     break;
                 case TaskCompletionStatus.Result:
-                    tcs.SetResult(SuperJsonSerializer.ConvertResult(result.Result, tcs.GetType().GetGenericArguments()[0]));
+                    tcs.SetResult(SuperJsonSerializer.ConvertResult(result.Result, 
+					tcs.GetType().GetGenericArguments()[0]));
                     break;
                 default:
                     throw new Exception("Holy Moly!");

@@ -9,18 +9,14 @@ namespace ClientTestes
     {
         static void Main(string[] args)
         {
+			Console.WriteLine ("Client Testes a0.00001");
             var client = new SuperClient();
-            client.Connect("127.0.0.1", 666);
+            client.Connect("127.0.0.1", 55666);
             var testesImpl = client.GetInstance<ITestes>();
             testesImpl.Act += () => Console.WriteLine("Action!");
             while (Console.ReadLine() != "Exit")
             {
-                var result = testesImpl.Har();
-                var result1 = result.Har();
-                var resultId = result.GetId();
-                var resultId1 = result1.GetId();
-                result.TestesProp = 5;
-                var five = result1.TestesProp;
+				testesImpl.GetId ();
                 int a = 6;
                 /*
                 var resultTask = testesImpl.Zar("10");

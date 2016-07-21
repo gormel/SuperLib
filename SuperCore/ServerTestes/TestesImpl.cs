@@ -43,7 +43,7 @@ namespace ServerTestes
 
         public Guid GetId()
         {
-            Act?.Invoke();
+			Act?.Invoke();
             return mId;
         }
 

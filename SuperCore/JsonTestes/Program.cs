@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using SuperJson;
+using System.Reflection;
 
 namespace JsonTestes
 {
     class Program
-    {
+	{
         static void Main(string[] args)
         {
             var serializer = new SuperJsonSerializer();

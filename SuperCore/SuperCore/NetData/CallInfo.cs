@@ -5,7 +5,7 @@ using SuperCore.Core;
 
 namespace SuperCore.NetData
 {
-    public class CallInfo
+    public class CallInfo : Call
     {
         public Guid CallID = Guid.NewGuid();
         public Guid ClassID;
@@ -19,7 +19,10 @@ namespace SuperCore.NetData
         {
             if (mType == null)
             {
-                mType = Type.GetType(TypeName, true);
+				mType = AppDomain.CurrentDomain.GetAssemblies ()
+					.SelectMany (a => a.GetTypes ())
+					.First (t => t.AssemblyQualifiedName == TypeName);
+                //mType = Type.GetType(TypeName, true);
             }
             if (mType == null)
                 return null;

@@ -10,13 +10,13 @@ namespace SuperCore.Core
 {
     public abstract class Super
     {
-        private readonly Dictionary<string, object> mRegistred = new Dictionary<string, object>();
+        protected readonly Dictionary<string, object> mRegistred = new Dictionary<string, object>();
 
-        private readonly Dictionary<Guid, object> mIdRegistred = new Dictionary<Guid, object>(); 
+        protected readonly Dictionary<Guid, object> mIdRegistred = new Dictionary<Guid, object>(); 
 
         private readonly AssemblyName mAssemblyName = new AssemblyName(Guid.NewGuid().ToString());
 
-        private readonly AssemblyBuilder mAssemblyBuilder;
+        internal readonly AssemblyBuilder mAssemblyBuilder;
 
         protected Super()
         {
@@ -26,7 +26,15 @@ namespace SuperCore.Core
         protected CallResult Call(CallInfo info)
         {
             var obj = info.ClassID == Guid.Empty ? mRegistred[info.TypeName] : mIdRegistred[info.ClassID];
-            var method = obj.GetType().GetMethod(info.MethodName);
+			var declaringType = obj?.GetType ();
+			if (obj is StaticTypeInfoWrapper) 
+			{
+				var typed = (StaticTypeInfoWrapper)obj;
+				declaringType = Type.GetType (typed.TypeName);
+				obj = null;
+			}
+			var method = declaringType.GetMethod(info.MethodName, 
+				BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
 
             var result = method.Invoke(obj, method.GetParameters()
                 .Select((p, i) => SuperJsonSerializer.ConvertResult(info.Args[i], p.ParameterType)).ToArray());
@@ -126,7 +134,7 @@ namespace SuperCore.Core
 
                 //info.MethodName = $"{method.Name}";
                 generator.Emit(OpCodes.Ldloc_0);
-                generator.Emit(OpCodes.Ldstr, method.Name);
+				generator.Emit(OpCodes.Ldstr, methodBuilder.Name);
                 generator.Emit(OpCodes.Stfld, typeof(CallInfo).GetField(nameof(CallInfo.MethodName)));
 
                 //var args(loc_1) = new object[method.GetParameters().Length];
@@ -191,6 +199,11 @@ namespace SuperCore.Core
             return result as T;
         }
 
+		internal void Register(object inst, Guid id)
+		{
+			mIdRegistred.Add(id, inst);
+		}
+
         public void Register<T>(T inst, Guid id = new Guid()) where T : class
         {
             if (!typeof(T).IsInterface)
@@ -198,7 +211,7 @@ namespace SuperCore.Core
 
             if (id != Guid.Empty)
             {
-                mIdRegistred.Add(id, inst);
+				Register ((object)inst, id);
                 return;
             }
             mRegistred.Add(typeof(T).AssemblyQualifiedName, inst);
