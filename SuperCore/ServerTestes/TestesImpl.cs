@@ -6,7 +6,7 @@ using Testes;
 
 namespace ServerTestes
 {
-    class TestesImpl : ITestes
+	class TestesImpl : ITestes
     {
         private Guid mId = Guid.NewGuid();
         public int Foo(int val)
@@ -49,5 +49,12 @@ namespace ServerTestes
 
         public int TestesProp { get; set; }
         public event Action Act;
+
+		public event Func<string> Act1;
+
+		public string Get1 ()
+		{
+			return Act1.Invoke ();
+		}
     }
 }

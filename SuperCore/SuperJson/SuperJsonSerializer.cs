@@ -113,7 +113,7 @@ namespace SuperJson
                         return customer.Deserialize(obj, this);
                     }
 
-                    var typeName = obj["$type"].ToString();
+                    var typeName = obj["$type"].ToString();//todo: protected serialization constructor
                     if (string.IsNullOrEmpty(typeName))
                         throw new FormatException();
                     var type = Type.GetType(typeName, true);

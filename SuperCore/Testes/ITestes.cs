@@ -16,5 +16,8 @@ namespace Testes
         Guid GetId();
         int TestesProp { get; set; }
         event Action Act;
+
+		event Func<string> Act1;
+		string Get1 ();
     }
 }

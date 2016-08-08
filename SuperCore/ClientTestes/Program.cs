@@ -11,12 +11,13 @@ namespace ClientTestes
         {
 			Console.WriteLine ("Client Testes a0.00001");
             var client = new SuperClient();
-            client.Connect("127.0.0.1", 55666);
+            client.Connect("127.0.0.1", 5566);
             var testesImpl = client.GetInstance<ITestes>();
             testesImpl.Act += () => Console.WriteLine("Action!");
+			testesImpl.Act1 += () => "STROKA";
             while (Console.ReadLine() != "Exit")
             {
-				testesImpl.GetId ();
+				Console.WriteLine (testesImpl.Get1 ());
                 int a = 6;
                 /*
                 var resultTask = testesImpl.Zar("10");
