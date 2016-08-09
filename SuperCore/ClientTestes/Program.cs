@@ -14,10 +14,10 @@ namespace ClientTestes
             client.Connect("127.0.0.1", 5566);
             var testesImpl = client.GetInstance<ITestes>();
             testesImpl.Act += () => Console.WriteLine("Action!");
-			testesImpl.Act1 += () => "STROKA";
+			//testesImpl.Act1 += () => "STROKA";
             while (Console.ReadLine() != "Exit")
             {
-				Console.WriteLine (testesImpl.Get1 ());
+				Console.WriteLine (testesImpl.GetId ());
                 int a = 6;
                 /*
                 var resultTask = testesImpl.Zar("10");

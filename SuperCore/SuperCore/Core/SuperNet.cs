@@ -8,6 +8,7 @@ using SuperCore.NetData;
 using SuperCore.SerializeCustomers;
 using SuperJson;
 using System.Diagnostics;
+using System.Threading;
 
 namespace SuperCore.Core
 {
@@ -47,40 +48,45 @@ namespace SuperCore.Core
             return result;
         }
 
-        protected void StartReadClient(Socket client)
+        protected async Task ReadClient(Socket client, CancellationToken stop = default(CancellationToken))
         {
-            Task.Run(async () =>
+            try
             {
                 while (true)
                 {
+                    stop.ThrowIfCancellationRequested();
                     var resultObj = await GetObject(client);
-					Task.Run(async () => 
-					{
-	                    if (resultObj is Call)
-	                    {
-							Result result;
-							var send = ReciveCall((Call)resultObj, out result);
-							if (!send)
-								return;
-
-	                        var data = GetBytes(result);
-	                        await client.SendBytes(BitConverter.GetBytes(data.Length));
-	                        await client.SendBytes(data);
-	                    }
-	                    else if (resultObj is Result)
-	                    {
-	                        ReciveData((Result)resultObj);
-	                    }
-					});
+                    stop.ThrowIfCancellationRequested();
+                    var processedResult = ProcessResult(client, resultObj);
                 }
-            }).ContinueWith(t =>
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception ex)
             {
-                var ex = t.Exception;
-				Trace.WriteLine(ex);
+                Trace.WriteLine(ex);
                 ClientDisconnected(client);
-            });
+            }
         }
-        
+
+        private async Task ProcessResult(Socket client, object resultObj)
+        {
+            if (resultObj is Call)
+            {
+                Result result;
+                var send = ReciveCall((Call)resultObj, out result);
+                if (!send)
+                    return;
+
+                var data = GetBytes(result);
+                await client.SendBytes(BitConverter.GetBytes(data.Length));
+                await client.SendBytes(data);
+            }
+            else if (resultObj is Result)
+            {
+                ReciveData((Result)resultObj);
+            }
+        }
+
         internal abstract void SendData(object info);
 
         protected abstract void ClientDisconnected(Socket client);

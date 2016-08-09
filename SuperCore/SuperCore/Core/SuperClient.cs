@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Net.Sockets;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SuperCore.Core
 {
@@ -7,11 +9,11 @@ namespace SuperCore.Core
     {
         private Socket mClient;
 
-        public void Connect(string ip, int port)
+        public Task Connect(string ip, int port, CancellationToken stop = default(CancellationToken))
         {
             mClient = new Socket(SocketType.Stream, ProtocolType.Tcp);
             mClient.Connect(ip, port);
-            StartReadClient(mClient);
+            return ReadClient(mClient, stop);
         }
         
         internal async override void SendData(object info)

@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using SuperCore.NetData;
 using SuperJson;
+using Mono.Cecil;
 
 namespace SuperCore.Core
 {
@@ -84,6 +85,12 @@ namespace SuperCore.Core
                 TypeAttributes.Class | TypeAttributes.Public, 
                 typeof(object), 
                 new []{ typeof(T) });
+
+            var typeDefenition = new TypeDefinition(
+                mAssemblyName.FullName, 
+                typeof(T).Name + "_" + Guid.NewGuid(),
+                Mono.Cecil.TypeAttributes.Class | Mono.Cecil.TypeAttributes.Public,
+                new TypeReference();
 
             var idFieldBuilder = typeBuilder.DefineField("ID", typeof (Guid), FieldAttributes.Public);
 

@@ -33,7 +33,7 @@ namespace SuperCore
 
 			//generate interface
 			var moduleBuilder = mSuper.mAssemblyBuilder.DefineDynamicModule(Guid.NewGuid().ToString());
-			var typeBuilder = moduleBuilder.DefineType ($"<IDelegateWrapper>_{Guid.NewGuid()}", 
+			var typeBuilder = moduleBuilder.DefineType ($"IDelegateWrapper_{Guid.NewGuid()}", 
 				TypeAttributes.Interface | TypeAttributes.Abstract | TypeAttributes.Public);
 			typeBuilder.DefineMethod (methodName,
 				MethodAttributes.Abstract | MethodAttributes.Virtual | MethodAttributes.Public,
