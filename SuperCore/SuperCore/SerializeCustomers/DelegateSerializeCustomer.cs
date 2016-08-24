@@ -59,7 +59,6 @@ namespace SuperCore.SerializeCustomers
 			result.Add ("$type", "DelegateWrapper");
 			result.Add ("ID", id.ToString ());
 			result.Add ("DelegateType", typed.GetType ().AssemblyQualifiedName);
-			result.Add ("MethodName", typed.Method.Name);
 
 			var args = new JArray ();
 			foreach (var param in typed.Method.GetParameters()) 

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Reflection;
 using Newtonsoft.Json.Linq;
 using SuperCore.Core;
 using SuperCore.Wrappers;
@@ -14,13 +13,6 @@ namespace SuperCore.DeserializeCustomers
 		public DelegateDeserializeCustomer (SuperNet super)
 		{
 			mSuper = super;
-		}
-
-		#region implemented abstract members of DeserializeCustomer
-
-		public override bool UseCustomer (JToken obj, Type declaredType)
-		{
-			return obj["$type"]?.ToString() == "DelegateWrapper";
 		}
 
 	    public Type GetActionWrapper(Type[] argTypes)
@@ -37,11 +29,17 @@ namespace SuperCore.DeserializeCustomers
 	        return typeof (IDelegateFuncWrapper<>).MakeGenericType(argTypes.Concat(new[] {resultType}).ToArray());
 	    }
 
+		#region implemented abstract members of DeserializeCustomer
+
+		public override bool UseCustomer (JToken obj, Type declaredType)
+		{
+			return obj["$type"]?.ToString() == "DelegateWrapper";
+		}
+
 		public override object Deserialize (JToken obj, SuperJsonSerializer serializer)
 		{
 			var delegateId = Guid.Parse (obj ["ID"].ToString ());
 			var delegateType = Type.GetType (obj ["DelegateType"].ToString (), true);
-			var methodName = obj ["MethodName"].ToString ();
 			var argTypes = ((JArray)obj ["ArgumentTypes"])
 				.Select (t => Type.GetType (t.ToString ())).ToArray ();
 			var returnType = Type.GetType (obj ["ReturnType"].ToString ());

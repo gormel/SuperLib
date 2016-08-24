@@ -236,3 +236,8 @@ _Pvt_Extensions
 .fake/
 
 .vscode/
+/SuperCore/SuperCore/publish.bat
+/SuperCore/SuperCore/push.bat
+/SuperCore/SuperCore/SuperCore.0.1.0.0.nupkg
+/SuperCore/SuperCore/SuperCore.nuspec
+/SuperCore/SuperCore/nuget.exe
