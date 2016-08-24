@@ -70,21 +70,24 @@ namespace SuperCore.Core
 
         private async Task ProcessResult(Socket client, object resultObj)
         {
-            if (resultObj is Call)
+            Task.Run(async () =>
             {
-                Result result;
-                var send = ReciveCall((Call)resultObj, out result);
-                if (!send)
-                    return;
+                if (resultObj is Call)
+                {
+                    Result result;
+                    var send = ReciveCall((Call) resultObj, out result);
+                    if (!send)
+                        return;
 
-                var data = GetBytes(result);
-                await client.SendBytes(BitConverter.GetBytes(data.Length));
-                await client.SendBytes(data);
-            }
-            else if (resultObj is Result)
-            {
-                ReciveData((Result)resultObj);
-            }
+                    var data = GetBytes(result);
+                    await client.SendBytes(BitConverter.GetBytes(data.Length));
+                    await client.SendBytes(data);
+                }
+                else if (resultObj is Result)
+                {
+                    ReciveData((Result) resultObj);
+                }
+            });
         }
 
         internal abstract void SendData(object info);
