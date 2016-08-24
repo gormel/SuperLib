@@ -32,13 +32,8 @@ namespace SuperCore.Core
         protected CallResult Call(CallInfo info)
         {
             var obj = info.ClassID == Guid.Empty ? mRegistred[info.TypeName] : mIdRegistred[info.ClassID];
-			var declaringType = obj?.GetType ();/*
-			if (obj is StaticTypeInfoWrapper) 
-			{
-				var typed = (StaticTypeInfoWrapper)obj;
-				declaringType = Type.GetType (typed.TypeName);
-				obj = null;
-			}*/
+			var declaringType = obj?.GetType ();
+
 			var method = declaringType.GetMethod(info.MethodName, 
 				BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
 

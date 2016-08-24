@@ -70,46 +70,42 @@ namespace SuperCore.Core
 
         private async Task ProcessResult(Socket client, object resultObj)
         {
-            Task.Run(async () =>
+            if (resultObj is Call)
             {
-                if (resultObj is Call)
-                {
-                    Result result;
-                    var send = ReciveCall((Call) resultObj, out result);
-                    if (!send)
-                        return;
+                var send = await ReciveCall((Call) resultObj);
+                if (!send.Item1)
+                    return;
 
-                    var data = GetBytes(result);
-                    await client.SendBytes(BitConverter.GetBytes(data.Length));
-                    await client.SendBytes(data);
-                }
-                else if (resultObj is Result)
-                {
-                    ReciveData((Result) resultObj);
-                }
-            });
+                var data = GetBytes(send.Item2);
+                await client.SendBytes(BitConverter.GetBytes(data.Length));
+                await client.SendBytes(data);
+            }
+            else if (resultObj is Result)
+            {
+                ReciveData((Result) resultObj);
+            }
         }
 
         internal abstract void SendData(object info);
 
         protected abstract void ClientDisconnected(Socket client);
 
-		protected bool ReciveCall(Call info, out Result result)
+		protected Task<Tuple<bool, Result>> ReciveCall(Call info)
 		{
 			dynamic call = info;
-			return ReciveCall(call, out result);
+			return ReciveCall(call);
 		}
 
-		protected bool ReciveCall(CallInfo info, out Result result)
+		protected async Task<Tuple<bool, Result>> ReciveCall(CallInfo info)
 		{
-			result = null;
+		    Result result = null;
 			if (info.ClassID != Guid.Empty && !mIdRegistred.ContainsKey (info.ClassID))
-				return false;
+				return Tuple.Create(false, (Result)null);
 			if (info.ClassID == Guid.Empty && !mRegistred.ContainsKey (info.TypeName))
-				return false;
+				return Tuple.Create(false, (Result)null);
 			try
 			{
-				result = Call(info);
+				result = await Task.Run(() => Call(info));
 			}
 			catch (Exception e)
 			{
@@ -120,7 +116,7 @@ namespace SuperCore.Core
 					Exception = true
 				};
 			}
-			return true;
+			return Tuple.Create(true, result);
 		}
 
         protected void ReciveData(Result result)
