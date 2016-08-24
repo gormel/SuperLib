@@ -7,6 +7,7 @@ using System.Reflection.Emit;
 using SuperCore.NetData;
 using SuperJson;
 using Mono.Cecil;
+using SuperCore.Wrappers;
 using FieldAttributes = System.Reflection.FieldAttributes;
 using MethodAttributes = System.Reflection.MethodAttributes;
 using TypeAttributes = System.Reflection.TypeAttributes;
@@ -31,13 +32,13 @@ namespace SuperCore.Core
         protected CallResult Call(CallInfo info)
         {
             var obj = info.ClassID == Guid.Empty ? mRegistred[info.TypeName] : mIdRegistred[info.ClassID];
-			var declaringType = obj?.GetType ();
+			var declaringType = obj?.GetType ();/*
 			if (obj is StaticTypeInfoWrapper) 
 			{
 				var typed = (StaticTypeInfoWrapper)obj;
 				declaringType = Type.GetType (typed.TypeName);
 				obj = null;
-			}
+			}*/
 			var method = declaringType.GetMethod(info.MethodName, 
 				BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
 
@@ -78,7 +79,7 @@ namespace SuperCore.Core
             return result;
         }
 
-        private object GetInstance(Type interfaceType, Guid id)
+        internal object GetInstance(Type interfaceType, Guid id)
         {
 
             var moduleBuilder = mAssemblyBuilder.DefineDynamicModule(Guid.NewGuid().ToString());

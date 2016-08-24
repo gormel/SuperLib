@@ -63,7 +63,8 @@
     <Compile Include="Async\AsyncSemaphore.cs" />
     <Compile Include="DeserializeCustomers\InterfaceDeserializeCustomer.cs" />
     <Compile Include="DeserializeCustomers\TaskDeserializeCustomer.cs" />
-    <Compile Include="InterfaceWrapper.cs" />
+    <Compile Include="Wrappers\IDelegateWrapper.cs" />
+    <Compile Include="Wrappers\InterfaceWrapper.cs" />
     <Compile Include="NetData\CallInfo.cs" />
     <Compile Include="NetData\CallResult.cs" />
     <Compile Include="NetData\Result.cs" />
@@ -80,7 +81,7 @@
     <Compile Include="SerializeCustomers\DelegateSerializeCustomer.cs" />
     <Compile Include="DeserializeCustomers\DelegateDeserializeCustomer.cs" />
     <Compile Include="NetData\Call.cs" />
-    <Compile Include="StaticTypeInfoWrapper.cs" />
+    <Compile Include="Wrappers\DelegateWrapper.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SuperJson\SuperJson.csproj">

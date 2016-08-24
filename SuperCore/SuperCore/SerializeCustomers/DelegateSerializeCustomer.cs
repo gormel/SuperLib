@@ -1,10 +1,11 @@
 ﻿using System;
-using SuperJson;
-using SuperCore.Core;
+using System.Linq;
 using Newtonsoft.Json.Linq;
-using System.Reflection;
+using SuperCore.Core;
+using SuperCore.Wrappers;
+using SuperJson;
 
-namespace SuperCore
+namespace SuperCore.SerializeCustomers
 {
 	public class DelegateSerializeCustomer : SerializeCustomer
 	{
@@ -14,26 +15,46 @@ namespace SuperCore
 		{
 			mSuper = super;
 		}
+        
+        public Type GetActionWrapper(Type[] argTypes)
+        {
+            if (argTypes.Length == 0)
+                return typeof(DelegateActionWrapper);
+            return typeof(DelegateActionWrapper<>).MakeGenericType(argTypes);
+        }
 
-		#region implemented abstract members of SerializeCustomer
+        public Type GetFuncWrapper(Type resultType, Type[] argTypes)
+        {
+            if (argTypes.Length == 0)
+                return typeof(DelegateFuncWrapper<>).MakeGenericType(resultType);
+            return typeof(DelegateFuncWrapper<>).MakeGenericType(argTypes.Concat(new[] { resultType }).ToArray());
+        }
 
-		public override bool UseCustomer (object obj, Type declaredType)
+        #region implemented abstract members of SerializeCustomer
+
+        public override bool UseCustomer (object obj, Type declaredType)
 		{
 			return obj is Delegate;
 		}
 
 		public override JToken Serialize (object obj, Type declaredType, SuperJsonSerializer serializer)
 		{
-			var result = new JObject ();
+			var result = new JObject();
 
-			var id = Guid.NewGuid ();
+			var id = Guid.NewGuid();
 
-			var typed = obj as Delegate;
+			var typed = (Delegate)obj;
 
-			mSuper.Register (typed.Target ?? new StaticTypeInfoWrapper
-				{
-					TypeName = typed.Method.DeclaringType.AssemblyQualifiedName
-				}, id);
+		    var delegateParameters = typed.Method.GetParameters().Select(p => p.ParameterType).ToArray();
+
+
+            Type wrapperType = null;
+		    if (typed.Method.ReturnType == typeof (void))
+		        wrapperType = GetActionWrapper(delegateParameters);
+		    else
+		        wrapperType = GetFuncWrapper(typed.Method.ReturnType, delegateParameters);
+
+			mSuper.Register(Activator.CreateInstance(wrapperType, typed), id);
 
 			result.Add ("$type", "DelegateWrapper");
 			result.Add ("ID", id.ToString ());
