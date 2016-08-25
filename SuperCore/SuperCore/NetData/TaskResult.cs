@@ -2,14 +2,14 @@
 
 namespace SuperCore.NetData
 {
-    public enum TaskCompletionStatus
+    internal enum TaskCompletionStatus
     {
         Canceled,
         Exception,
         Result,
     }
 
-    public class TaskResult : Result
+    internal class TaskResult : Result
     {
         public Guid TaskID { get; set; }
 

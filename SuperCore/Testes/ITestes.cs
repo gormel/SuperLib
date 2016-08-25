@@ -18,7 +18,7 @@ namespace Testes
         event Action Act;
 
 		event Func<string> Act1;
-        event Func<int, string> Act2; 
-		string Get1 (int input);
+        event Func<int, double, string> Act2; 
+		string Get1 (int input, double input2);
     }
 }

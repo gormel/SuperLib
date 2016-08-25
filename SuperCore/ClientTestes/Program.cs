@@ -1,5 +1,4 @@
 ﻿using System;
-using SuperCore;
 using SuperCore.Core;
 using Testes;
 
@@ -14,10 +13,11 @@ namespace ClientTestes
             client.Connect("127.0.0.1", 5566);
             var testesImpl = client.GetInstance<ITestes>();
             //testesImpl.Act += () => Console.WriteLine("Action!");
-			testesImpl.Act2 += (a) => $"STROKA {a}";
+            var actImpl = new Func<int, double, string>((a, b) => $"STROKA {a + b}");
+			testesImpl.Act2 += actImpl;
             while (Console.ReadLine() != "Exit")
             {
-				Console.WriteLine (testesImpl.Get1(8));
+				Console.WriteLine (testesImpl.Get1(8, 10.4));
                 int a = 6;
                 /*
                 var resultTask = testesImpl.Zar("10");

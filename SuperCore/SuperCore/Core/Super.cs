@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -14,13 +15,13 @@ namespace SuperCore.Core
 {
     public abstract class Super
     {
-        protected readonly Dictionary<string, object> mRegistred = new Dictionary<string, object>();
+        protected readonly ConcurrentDictionary<string, object> mRegistred = new ConcurrentDictionary<string, object>();
 
-        protected readonly Dictionary<Guid, object> mIdRegistred = new Dictionary<Guid, object>(); 
+        protected readonly ConcurrentDictionary<Guid, object> mIdRegistred = new ConcurrentDictionary<Guid, object>(); 
 
         private readonly AssemblyName mAssemblyName = new AssemblyName(Guid.NewGuid().ToString());
 
-        private Dictionary<Type, Type> mGeneratedTypesCashe = new Dictionary<Type, Type>(); 
+        private readonly Dictionary<Type, Type> mGeneratedTypesCashe = new Dictionary<Type, Type>(); 
 
         internal readonly AssemblyBuilder mAssemblyBuilder;
 
@@ -29,7 +30,7 @@ namespace SuperCore.Core
             mAssemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(mAssemblyName, AssemblyBuilderAccess.RunAndSave);
         }
 
-        protected CallResult Call(CallInfo info)
+        internal CallResult Call(CallInfo info)
         {
             var obj = info.ClassID == Guid.Empty ? mRegistred[info.TypeName] : mIdRegistred[info.ClassID];
 			var declaringType = obj?.GetType ();
@@ -54,6 +55,7 @@ namespace SuperCore.Core
         }
 
         public abstract CallResult SendCall(CallInfo info);
+        public abstract void SendDestroy(string typeName, Guid classID);
 
         internal static List<MethodInfo> CollectMethods(Type interfaceType)
         {
@@ -179,8 +181,7 @@ namespace SuperCore.Core
                     generator.Emit(OpCodes.Ldarg_0);
                     generator.Emit(OpCodes.Ldfld, superFieldBuilder);
                     generator.Emit(OpCodes.Ldloc_0);
-                    generator.Emit(OpCodes.Callvirt,
-                        typeof (Super).GetMethod(nameof(Super.SendCall), BindingFlags.Instance | BindingFlags.Public));
+                    generator.Emit(OpCodes.Callvirt, typeof (Super).GetMethod(nameof(SendCall), BindingFlags.Instance | BindingFlags.Public));
                     generator.Emit(OpCodes.Stloc_2);
 
                     if (method.ReturnType != typeof (void))
@@ -196,6 +197,24 @@ namespace SuperCore.Core
                     typeBuilder.DefineMethodOverride(methodBuilder, method);
 
                 }
+
+                //finalizer
+                var finalizerBuilder = typeBuilder.DefineMethod("Finalize",
+                    MethodAttributes.HideBySig | MethodAttributes.Private | MethodAttributes.NewSlot,
+                    CallingConventions.HasThis | CallingConventions.Standard,
+                    typeof(void),
+                    new Type[0]);
+
+                var finalizerGenerator = finalizerBuilder.GetILGenerator();
+
+                //this.mSuper.SendDestroy(typeof(T).AssemblyQualifiedName, this.ID);
+                
+                finalizerGenerator.Emit(OpCodes.Ldarg_0);
+                finalizerGenerator.Emit(OpCodes.Ldfld, superFieldBuilder);
+                finalizerGenerator.Emit(OpCodes.Ldstr, interfaceType.AssemblyQualifiedName);
+                finalizerGenerator.Emit(OpCodes.Ldarg_0);
+                finalizerGenerator.Emit(OpCodes.Ldfld, idFieldBuilder);
+                finalizerGenerator.Emit(OpCodes.Callvirt, typeof(Super).GetMethod(nameof(SendDestroy), BindingFlags.Instance | BindingFlags.Public));
 
                 var type = typeBuilder.CreateType();
                 mGeneratedTypesCashe.Add(interfaceType, type);
@@ -219,7 +238,7 @@ namespace SuperCore.Core
 
 		internal void Register(object inst, Guid id)
 		{
-			mIdRegistred.Add(id, inst);
+			mIdRegistred.TryAdd(id, inst);
 		}
 
         public void Register<T>(T inst, Guid id = new Guid()) where T : class
@@ -232,7 +251,7 @@ namespace SuperCore.Core
 				Register ((object)inst, id);
                 return;
             }
-            mRegistred.Add(typeof(T).AssemblyQualifiedName, inst);
+            mRegistred.TryAdd(typeof(T).AssemblyQualifiedName, inst);
         }
     }
 }

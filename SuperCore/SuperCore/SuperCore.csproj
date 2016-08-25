@@ -47,6 +47,7 @@
     <Compile Include="Async\AsyncSemaphore.cs" />
     <Compile Include="DeserializeCustomers\InterfaceDeserializeCustomer.cs" />
     <Compile Include="DeserializeCustomers\TaskDeserializeCustomer.cs" />
+    <Compile Include="NetData\CallDestroyInfo.cs" />
     <Compile Include="Utils\Utils.cs" />
     <Compile Include="Wrappers\IDelegateWrapper.cs" />
     <Compile Include="Wrappers\InterfaceWrapper.cs" />

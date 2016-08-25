@@ -51,12 +51,12 @@ namespace ServerTestes
         public event Action Act;
 
 		public event Func<string> Act1;
-	    public event Func<int, string> Act2;
+	    public event Func<int, double, string> Act2;
 
 
-	    public string Get1 (int input)
+	    public string Get1 (int input, double input2)
 		{
-			return Act2?.Invoke (input);
+			return Act2?.Invoke (input, input2);
 		}
     }
 }

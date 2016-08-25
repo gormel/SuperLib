@@ -48,6 +48,15 @@ namespace SuperCore.Core
             return result;
         }
 
+        public override void SendDestroy(string typeName, Guid classID)
+        {
+            SendData(new CallDestroyInfo
+            {
+                ClassID = classID,
+                TypeName = typeName
+            });
+        }
+
         protected async Task ReadClient(Socket client, CancellationToken stop = default(CancellationToken))
         {
             try
@@ -90,13 +99,29 @@ namespace SuperCore.Core
 
         protected abstract void ClientDisconnected(Socket client);
 
-		protected Task<Tuple<bool, Result>> ReciveCall(Call info)
+		Task<Tuple<bool, Result>> ReciveCall(Call info)
 		{
 			dynamic call = info;
 			return ReciveCall(call);
 		}
 
-		protected async Task<Tuple<bool, Result>> ReciveCall(CallInfo info)
+        private async Task<Tuple<bool, Result>> ReciveCall(CallDestroyInfo info)
+        {
+            object notUsed;
+            if (info.ClassID != Guid.Empty)
+            {
+                mIdRegistred.TryRemove(info.ClassID, out notUsed);
+                Trace.WriteLine($"Collecting {info.ClassID}");
+            }
+            else
+            {
+                mRegistred.TryRemove(info.TypeName, out notUsed);
+                Trace.WriteLine($"Collecting {info.TypeName}");
+            }
+            return Tuple.Create(false, (Result)null);
+        }
+
+		async Task<Tuple<bool, Result>> ReciveCall(CallInfo info)
 		{
 		    Result result = null;
 			if (info.ClassID != Guid.Empty && !mIdRegistred.ContainsKey (info.ClassID))
@@ -119,13 +144,13 @@ namespace SuperCore.Core
 			return Tuple.Create(true, result);
 		}
 
-        protected void ReciveData(Result result)
+        void ReciveData(Result result)
         {
             dynamic res = result;
             ReciveData(res);
         }
 
-        protected void ReciveData(CallResult result)
+        void ReciveData(CallResult result)
         {
             TaskCompletionSource<CallResult> tcs;
 			if (!mWaitingCalls.TryRemove (result.CallID, out tcs))
@@ -140,7 +165,7 @@ namespace SuperCore.Core
             }
         }
 
-        protected void ReciveData(TaskResult result)
+        void ReciveData(TaskResult result)
         {
             var tcs = WaitingTasks[result.TaskID];
             switch (result.Status)
