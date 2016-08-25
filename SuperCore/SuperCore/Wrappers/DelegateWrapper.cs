@@ -2,8 +2,9 @@
 
 namespace SuperCore.Wrappers
 {
-	public class DelegateActionWrapper
-	{
+    internal class DelegateActionWrapperBase { }
+	internal class DelegateActionWrapper : DelegateActionWrapperBase
+    {
 	    private readonly Delegate mSubject;
 
 	    public DelegateActionWrapper(Delegate subject)
@@ -17,7 +18,7 @@ namespace SuperCore.Wrappers
 	    }
     }
 
-    public class DelegateActionWrapper<T1>
+    internal class DelegateActionWrapper<T1> : DelegateActionWrapperBase
     {
         private readonly Delegate mSubject;
 
@@ -32,7 +33,7 @@ namespace SuperCore.Wrappers
         }
     }
 
-    public class DelegateActionWrapper<T1, T2>
+    internal class DelegateActionWrapper<T1, T2> : DelegateActionWrapperBase
     {
         private readonly Delegate mSubject;
 
@@ -47,7 +48,7 @@ namespace SuperCore.Wrappers
         }
     }
 
-    public class DelegateActionWrapper<T1, T2, T3>
+    internal class DelegateActionWrapper<T1, T2, T3> : DelegateActionWrapperBase
     {
         private readonly Delegate mSubject;
 
@@ -62,7 +63,7 @@ namespace SuperCore.Wrappers
         }
     }
 
-    public class DelegateActionWrapper<T1, T2, T3, T4>
+    internal class DelegateActionWrapper<T1, T2, T3, T4> : DelegateActionWrapperBase
     {
         private readonly Delegate mSubject;
 
@@ -77,7 +78,7 @@ namespace SuperCore.Wrappers
         }
     }
 
-    public class DelegateActionWrapper<T1, T2, T3, T4, T5>
+    internal class DelegateActionWrapper<T1, T2, T3, T4, T5> : DelegateActionWrapperBase
     {
         private readonly Delegate mSubject;
 
@@ -92,7 +93,7 @@ namespace SuperCore.Wrappers
         }
     }
 
-    public class DelegateActionWrapper<T1, T2, T3, T4, T5, T6>
+    internal class DelegateActionWrapper<T1, T2, T3, T4, T5, T6> : DelegateActionWrapperBase
     {
         private readonly Delegate mSubject;
 
@@ -107,7 +108,7 @@ namespace SuperCore.Wrappers
         }
     }
 
-    public class DelegateActionWrapper<T1, T2, T3, T4, T5, T6, T7>
+    internal class DelegateActionWrapper<T1, T2, T3, T4, T5, T6, T7> : DelegateActionWrapperBase
     {
         private readonly Delegate mSubject;
 
@@ -122,7 +123,7 @@ namespace SuperCore.Wrappers
         }
     }
 
-    public class DelegateActionWrapper<T1, T2, T3, T4, T5, T6, T7, T8>
+    internal class DelegateActionWrapper<T1, T2, T3, T4, T5, T6, T7, T8> : DelegateActionWrapperBase
     {
         private readonly Delegate mSubject;
 
@@ -137,7 +138,7 @@ namespace SuperCore.Wrappers
         }
     }
 
-    public class DelegateActionWrapper<T1, T2, T3, T4, T5, T6, T7, T8, T9>
+    internal class DelegateActionWrapper<T1, T2, T3, T4, T5, T6, T7, T8, T9> : DelegateActionWrapperBase
     {
         private readonly Delegate mSubject;
 
@@ -152,7 +153,9 @@ namespace SuperCore.Wrappers
         }
     }
 
-    public class DelegateFuncWrapper<TResult>
+    public class DelegateFuncWrapperBase { }
+
+    public class DelegateFuncWrapper<TResult> : DelegateFuncWrapperBase
     {
         private readonly Delegate mSubject;
 
@@ -167,7 +170,7 @@ namespace SuperCore.Wrappers
         }
     }
 
-    public class DelegateFuncWrapper<T1, TResult>
+    public class DelegateFuncWrapper<T1, TResult> : DelegateFuncWrapperBase
     {
         private readonly Delegate mSubject;
 
@@ -182,7 +185,7 @@ namespace SuperCore.Wrappers
         }
     }
     
-    public class DelegateFuncWrapper<T1, T2, TResult>
+    public class DelegateFuncWrapper<T1, T2, TResult> : DelegateFuncWrapperBase
     {
         private readonly Delegate mSubject;
 
@@ -197,7 +200,7 @@ namespace SuperCore.Wrappers
         }
     }
 
-    public class DelegateFuncWrapper<T1, T2, T3, TResult>
+    public class DelegateFuncWrapper<T1, T2, T3, TResult> : DelegateFuncWrapperBase
     {
         private readonly Delegate mSubject;
 
@@ -212,7 +215,7 @@ namespace SuperCore.Wrappers
         }
     }
 
-    public class DelegateFuncWrapper<T1, T2, T3, T4, TResult>
+    public class DelegateFuncWrapper<T1, T2, T3, T4, TResult> : DelegateFuncWrapperBase
     {
         private readonly Delegate mSubject;
 
@@ -227,7 +230,7 @@ namespace SuperCore.Wrappers
         }
     }
 
-    public class DelegateFuncWrapper<T1, T2, T3, T4, T5, TResult>
+    public class DelegateFuncWrapper<T1, T2, T3, T4, T5, TResult> : DelegateFuncWrapperBase
     {
         private readonly Delegate mSubject;
 
@@ -242,7 +245,7 @@ namespace SuperCore.Wrappers
         }
     }
 
-    public class DelegateFuncWrapper<T1, T2, T3, T4, T5, T6, TResult>
+    public class DelegateFuncWrapper<T1, T2, T3, T4, T5, T6, TResult> : DelegateFuncWrapperBase
     {
         private readonly Delegate mSubject;
 
@@ -257,7 +260,7 @@ namespace SuperCore.Wrappers
         }
     }
 
-    public class DelegateFuncWrapper<T1, T2, T3, T4, T5, T6, T7, TResult>
+    public class DelegateFuncWrapper<T1, T2, T3, T4, T5, T6, T7, TResult> : DelegateFuncWrapperBase
     {
         private readonly Delegate mSubject;
 
@@ -272,7 +275,7 @@ namespace SuperCore.Wrappers
         }
     }
 
-    public class DelegateFuncWrapper<T1, T2, T3, T4, T5, T6, T7, T8, TResult>
+    public class DelegateFuncWrapper<T1, T2, T3, T4, T5, T6, T7, T8, TResult> : DelegateFuncWrapperBase
     {
         private readonly Delegate mSubject;
 
@@ -287,7 +290,7 @@ namespace SuperCore.Wrappers
         }
     }
 
-    public class DelegateFuncWrapper<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult>
+    public class DelegateFuncWrapper<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult> : DelegateFuncWrapperBase
     {
         private readonly Delegate mSubject;
 

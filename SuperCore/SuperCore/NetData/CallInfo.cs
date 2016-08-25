@@ -19,9 +19,10 @@ namespace SuperCore.NetData
         {
             if (mType == null)
             {
-				mType = AppDomain.CurrentDomain.GetAssemblies ()
-					.SelectMany (a => a.GetTypes ())
-					.First (t => t.AssemblyQualifiedName == TypeName);
+                mType = Type.GetType(TypeName) ?? 
+                    AppDomain.CurrentDomain.GetAssemblies ()
+                    .SelectMany (a => a.GetTypes())
+                    .First (t => t.AssemblyQualifiedName == TypeName);
                 //mType = Type.GetType(TypeName, true);
             }
             if (mType == null)

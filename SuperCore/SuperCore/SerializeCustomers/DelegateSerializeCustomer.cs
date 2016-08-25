@@ -2,8 +2,9 @@
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using SuperCore.Core;
-using SuperCore.Wrappers;
 using SuperJson;
+using SuperCore.Utilses;
+using SuperCore.Wrappers;
 
 namespace SuperCore.SerializeCustomers
 {
@@ -15,20 +16,6 @@ namespace SuperCore.SerializeCustomers
 		{
 			mSuper = super;
 		}
-        
-        public Type GetActionWrapper(Type[] argTypes)
-        {
-            if (argTypes.Length == 0)
-                return typeof(DelegateActionWrapper);
-            return typeof(DelegateActionWrapper<>).MakeGenericType(argTypes);
-        }
-
-        public Type GetFuncWrapper(Type resultType, Type[] argTypes)
-        {
-            if (argTypes.Length == 0)
-                return typeof(DelegateFuncWrapper<>).MakeGenericType(resultType);
-            return typeof(DelegateFuncWrapper<>).MakeGenericType(argTypes.Concat(new[] { resultType }).ToArray());
-        }
 
         #region implemented abstract members of SerializeCustomer
 
@@ -50,9 +37,9 @@ namespace SuperCore.SerializeCustomers
 
             Type wrapperType = null;
 		    if (typed.Method.ReturnType == typeof (void))
-		        wrapperType = GetActionWrapper(delegateParameters);
+		        wrapperType = Utils.GetActionWrapper<DelegateActionWrapperBase>(delegateParameters);
 		    else
-		        wrapperType = GetFuncWrapper(typed.Method.ReturnType, delegateParameters);
+		        wrapperType = Utils.GetFuncWrapper<DelegateFuncWrapperBase>(typed.Method.ReturnType, delegateParameters);
 
 			mSuper.Register(Activator.CreateInstance(wrapperType, typed), id);
 

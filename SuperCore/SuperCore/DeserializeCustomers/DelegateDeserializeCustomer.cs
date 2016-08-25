@@ -2,6 +2,7 @@
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using SuperCore.Core;
+using SuperCore.Utilses;
 using SuperCore.Wrappers;
 using SuperJson;
 
@@ -14,20 +15,6 @@ namespace SuperCore.DeserializeCustomers
 		{
 			mSuper = super;
 		}
-
-	    public Type GetActionWrapper(Type[] argTypes)
-	    {
-	        if (argTypes.Length == 0)
-	            return typeof (IDelegateActionWrapper);
-	        return typeof(IDelegateActionWrapper<>).MakeGenericType(argTypes);
-	    }
-
-	    public Type GetFuncWrapper(Type resultType, Type[] argTypes)
-	    {
-	        if (argTypes.Length == 0)
-	            return typeof (IDelegateFuncWrapper<>).MakeGenericType(resultType);
-	        return typeof (IDelegateFuncWrapper<>).MakeGenericType(argTypes.Concat(new[] {resultType}).ToArray());
-	    }
 
 		#region implemented abstract members of DeserializeCustomer
 
@@ -46,9 +33,9 @@ namespace SuperCore.DeserializeCustomers
 
 		    Type generatedInterfaceType = null;
 		    if (returnType == typeof (void))
-		        generatedInterfaceType = GetActionWrapper(argTypes);
+		        generatedInterfaceType = Utils.GetActionWrapper<IDelegateActionWrapperBase>(argTypes);
 		    else
-		        generatedInterfaceType = GetFuncWrapper(returnType, argTypes);
+		        generatedInterfaceType = Utils.GetFuncWrapper<IDelegateFuncWrapperBase>(returnType, argTypes);
 
 			//get interface instance from super using delegate id
 			var inst = mSuper.GetInstance(generatedInterfaceType, delegateId);
