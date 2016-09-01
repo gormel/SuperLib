@@ -44,6 +44,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DeserializeCustomer.cs" />
+    <Compile Include="Objects\SuperArray.cs" />
+    <Compile Include="Objects\SuperBool.cs" />
+    <Compile Include="Objects\SuperNull.cs" />
+    <Compile Include="Objects\SuperNumber.cs" />
+    <Compile Include="Objects\SuperObject.cs" />
+    <Compile Include="Objects\SuperString.cs" />
+    <Compile Include="Objects\SuperToken.cs" />
+    <Compile Include="Objects\SuperTokenType.cs" />
+    <Compile Include="Parser\SuperJsonParser.cs" />
     <Compile Include="SuperJsonSerializer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SerializeCustomers\ArraySerializeCustomer.cs" />
