@@ -102,7 +102,7 @@ namespace SuperJson.Parser
             parsed += seq;
 
             if (pos >= data.Length)
-                return new SuperNumber {Value = double.Parse(parsed)};
+                return new SuperNumber(double.Parse(parsed));
 
             if (data[pos] == '.')
             {
@@ -114,7 +114,7 @@ namespace SuperJson.Parser
             }
 
             if (pos >= data.Length)
-                return new SuperNumber {Value = double.Parse(parsed)};
+                return new SuperNumber(double.Parse(parsed));
 
             if (data[pos] == 'e' || data[pos] == 'E')
             {
@@ -129,7 +129,7 @@ namespace SuperJson.Parser
                 parsed += seq;
             }
 
-            return new SuperNumber {Value = double.Parse(parsed)};
+            return new SuperNumber(double.Parse(parsed));
         }
 
         private string ParseDigitSequence(string data, ref int pos)
@@ -161,7 +161,7 @@ namespace SuperJson.Parser
                 return null;
             pos++;
 
-            return new SuperString() {Value = parsed};
+            return new SuperString(parsed);
         }
 
         private SuperArray ParseArray(string data, ref int pos)
@@ -169,7 +169,7 @@ namespace SuperJson.Parser
             if (pos >= data.Length || data[pos] != '[')
                 return null;
 
-            SuperArray result = new SuperArray();
+            SuperArray result;
 
             pos++;
 
@@ -177,9 +177,9 @@ namespace SuperJson.Parser
 
             var elems = ParseArrayElems(data, ref pos);
             if (elems == null)
-                result.Value = new SuperToken[0];
+                result = new SuperArray(new SuperToken[0]);
             else
-                result.Value = elems.ToArray();
+                result = new SuperArray(elems.ToArray());
 
             SkipSpaces(data, ref pos);
 
@@ -302,13 +302,13 @@ namespace SuperJson.Parser
             if (data.Substring(pos).StartsWith("True"))
             {
                 pos += 4;
-                return new SuperBool() {Value = true};
+                return new SuperBool(true);
             }
 
             if (data.Substring(pos).StartsWith("False"))
             {
                 pos += 5;
-                return new SuperBool() {Value = false};
+                return new SuperBool(false);
             }
 
             return null;

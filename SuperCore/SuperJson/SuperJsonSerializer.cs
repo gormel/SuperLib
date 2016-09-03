@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Newtonsoft.Json.Linq;
+using SuperJson.Objects;
+using SuperJson.Parser;
 using SuperJson.SerializeCustomers;
 
 namespace SuperJson
@@ -19,12 +20,14 @@ namespace SuperJson
         };
         public List<DeserializeCustomer> DeserializeCustomers { get; } = new List<DeserializeCustomer>();
         
+        private readonly SuperJsonParser mParser = new SuperJsonParser();
+
         public string Serialize(object obj)
         {
-            return Serialize(obj, null).ToString();
+            return mParser.Write(Serialize(obj, null));
         }
 
-        public JToken Serialize(object obj, Type declaredType)
+        public SuperToken Serialize(object obj, Type declaredType)
         {
             foreach (var customer in SerializeCustomers)
             {
@@ -36,12 +39,12 @@ namespace SuperJson
 
             var objType = obj.GetType();
             
-            var result = new JObject();
+            var result = new SuperObject();
 
             const BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
             var members = objType.GetMembers(bindingFlags);
             
-            result.Add("$type", new JValue(objType.AssemblyQualifiedName));
+            result.TypedValue.Add("$type", new SuperString(objType.AssemblyQualifiedName));
             
             foreach (var member in members)
             {
@@ -74,7 +77,7 @@ namespace SuperJson
                 if (memberValue == null)
                     continue;
 
-                result.Add(member.Name, Serialize(memberValue, declaredMemberType));
+                result.TypedValue.Add(member.Name, Serialize(memberValue, declaredMemberType));
             }
 
             return result;
@@ -82,30 +85,28 @@ namespace SuperJson
 
         public object Deserialize(string json)
         {
-            return Deserialize(JToken.Parse(json), null);
+            return Deserialize(mParser.Parse(json), null);
         }
 
-        public object Deserialize(JToken obj, Type declaredType)
+        public object Deserialize(SuperToken obj, Type declaredType)
         {
-            switch (obj.Type)
+            switch (obj.TokenType)
             {
-                case JTokenType.Null:
+                case SuperTokenType.Null:
                     return null;
-                case JTokenType.Array:
-                    var arr = (JArray)obj;
-                    var resultArr = new object[arr.Count];
-                    for (var i = 0; i < arr.Count; i++)
+                case SuperTokenType.Array:
+                    var arr = (SuperArray)obj;
+                    var resultArr = new object[arr.TypedValue.Length];
+                    for (var i = 0; i < arr.TypedValue.Length; i++)
                     {
-                        resultArr[i] = Deserialize(arr[i], null);
+                        resultArr[i] = Deserialize(arr.TypedValue[i], null);
                     }
                     return resultArr;
-                case JTokenType.Boolean:
-                case JTokenType.String:
-                case JTokenType.Integer:
-                case JTokenType.Float:
-                    var decVal = (JValue)obj;
-                    return decVal.Value;
-                case JTokenType.Object:
+                case SuperTokenType.Bool:
+                case SuperTokenType.String:
+                case SuperTokenType.Number:
+                    return obj.Value;
+                case SuperTokenType.Object:
                     foreach (var customer in DeserializeCustomers)
                     {
                         if (!customer.UseCustomer(obj, declaredType))
@@ -113,19 +114,21 @@ namespace SuperJson
                         return customer.Deserialize(obj, this);
                     }
 
-                    var typeName = obj["$type"].ToString();//todo: protected serialization constructor
+                    var resultObj = (SuperObject) obj;
+
+                    var typeName = (resultObj.TypedValue["$type"] as SuperString)?.TypedValue;//todo: protected serialization constructor
                     if (string.IsNullOrEmpty(typeName))
                         throw new FormatException();
                     var type = Type.GetType(typeName, true);
                     var inst = Activator.CreateInstance(type);
 
-                    var props = obj.Children().Cast<JProperty>();
+                    var props = resultObj.TypedValue;
                     foreach (var prop in props)
                     {
-                        if (prop.Name.StartsWith("$"))
+                        if (prop.Key.StartsWith("$"))
                             continue;
 
-                        var memInfo = type.GetMember(prop.Name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)[0];
+                        var memInfo = type.GetMember(prop.Key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)[0];
                         if (memInfo.MemberType == MemberTypes.Field)
                         {
                             var fieldInfo = (FieldInfo)memInfo;

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Reflection;
-using Newtonsoft.Json.Linq;
 using SuperCore.Core;
 using SuperJson;
+using SuperJson.Objects;
 
 namespace SuperCore.SerializeCustomers
 {
@@ -20,9 +20,9 @@ namespace SuperCore.SerializeCustomers
             return declaredType?.IsInterface ?? false;
         }
 
-        public override JToken Serialize(object obj, Type declaredType, SuperJsonSerializer serializer)
+        public override SuperToken Serialize(object obj, Type declaredType, SuperJsonSerializer serializer)
         {
-            var result = new JObject { { "$type", "InterfaceWrapper" } };
+            var result = new SuperObject { TypedValue = { { "$type", new SuperString("InterfaceWrapper") } }};
 
             var regType = declaredType;
             var regInst = obj;
@@ -34,8 +34,8 @@ namespace SuperCore.SerializeCustomers
             registerMethod = registerMethod.MakeGenericMethod(regType);
             registerMethod.Invoke(mSuper, new[] { regInst, registrationID });
 
-            result.Add("ID", registrationID);
-            result.Add("InterfaceType", regType.AssemblyQualifiedName);
+            result.TypedValue.Add("ID", new SuperString(registrationID.ToString()));
+            result.TypedValue.Add("InterfaceType", new SuperString(regType.AssemblyQualifiedName));
 
             return result;
         }

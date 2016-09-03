@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 using SuperCore.Core;
 using SuperJson;
+using SuperJson.Objects;
 
 namespace SuperCore.DeserializeCustomers
 {
@@ -18,15 +15,18 @@ namespace SuperCore.DeserializeCustomers
             mSuper = super;
         }
 
-        public override bool UseCustomer(JToken obj, Type declaredType)
+        public override bool UseCustomer(SuperToken obj, Type declaredType)
         {
-            return obj["$type"]?.ToString() == "TaskWrapper";
+            if (!(obj is SuperObject))
+                return false;
+            return ((SuperObject)obj).TypedValue["$type"].Value.ToString() == "TaskWrapper";
         }
 
-        public override object Deserialize(JToken obj, SuperJsonSerializer serializer)
+        public override object Deserialize(SuperToken obj, SuperJsonSerializer serializer)
         {
-            var id = Guid.Parse(obj["ID"].ToString());
-            var resultType = Type.GetType(obj["ResultType"].ToString());
+            var typed = (SuperObject) obj;
+            var id = Guid.Parse(typed.TypedValue["ID"].ToString());
+            var resultType = Type.GetType(typed.TypedValue["ResultType"].ToString());
             var tcsType = typeof(TaskCompletionSource<>).MakeGenericType(resultType);
             dynamic tcs = Activator.CreateInstance(tcsType);
             mSuper.WaitingTasks[id] = tcs;

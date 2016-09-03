@@ -45,6 +45,8 @@ namespace JsonTestes
 
             var parsed = parser.Parse(json1);
 
+            var unparsed = parser.Write(parsed);
+
             var arr1 = serializer.Deserialize(json);
             var list1 = serializer.Deserialize(json1);
 

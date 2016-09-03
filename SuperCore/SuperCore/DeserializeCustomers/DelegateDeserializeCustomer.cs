@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Linq;
-using Newtonsoft.Json.Linq;
 using SuperCore.Core;
 using SuperCore.Utilses;
 using SuperCore.Wrappers;
 using SuperJson;
+using SuperJson.Objects;
 
 namespace SuperCore.DeserializeCustomers
 {
@@ -18,18 +18,22 @@ namespace SuperCore.DeserializeCustomers
 
 		#region implemented abstract members of DeserializeCustomer
 
-		public override bool UseCustomer (JToken obj, Type declaredType)
+		public override bool UseCustomer (SuperToken obj, Type declaredType)
 		{
-			return obj["$type"]?.ToString() == "DelegateWrapper";
+		    if (!(obj is SuperObject))
+		        return false;
+			return ((SuperObject)obj).TypedValue["$type"].Value.ToString() == "DelegateWrapper";
 		}
 
-		public override object Deserialize (JToken obj, SuperJsonSerializer serializer)
+		public override object Deserialize (SuperToken obj, SuperJsonSerializer serializer)
 		{
-			var delegateId = Guid.Parse (obj ["ID"].ToString ());
-			var delegateType = Type.GetType (obj ["DelegateType"].ToString (), true);
-			var argTypes = ((JArray)obj ["ArgumentTypes"])
-				.Select (t => Type.GetType (t.ToString ())).ToArray ();
-			var returnType = Type.GetType (obj ["ReturnType"].ToString ());
+		    var typedObj = (SuperObject) obj;
+
+			var delegateId = Guid.Parse (typedObj.TypedValue["ID"].Value.ToString ());
+			var delegateType = Type.GetType (typedObj.TypedValue["DelegateType"].Value.ToString (), true);
+			var argTypes = ((SuperArray)typedObj.TypedValue["ArgumentTypes"])
+				.TypedValue.Select (t => Type.GetType (t.Value.ToString ())).ToArray ();
+			var returnType = Type.GetType (typedObj.TypedValue["ReturnType"].Value.ToString ());
 
 		    Type generatedInterfaceType = null;
 		    if (returnType == typeof (void))

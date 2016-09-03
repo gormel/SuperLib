@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
+using SuperJson.Objects;
 
 namespace SuperJson
 {
@@ -11,6 +7,6 @@ namespace SuperJson
     {
         public abstract bool UseCustomer(object obj, Type declaredType);
 
-        public abstract JToken Serialize(object obj, Type declaredType, SuperJsonSerializer serializer);
+        public abstract SuperToken Serialize(object obj, Type declaredType, SuperJsonSerializer serializer);
     }
 }

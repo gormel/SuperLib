@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Reflection;
-using Newtonsoft.Json.Linq;
 using SuperCore.Core;
 using SuperJson;
+using SuperJson.Objects;
 
 namespace SuperCore.DeserializeCustomers
 {
@@ -15,15 +15,18 @@ namespace SuperCore.DeserializeCustomers
             mSuper = super;
         }
 
-        public override bool UseCustomer(JToken obj, Type declaredType)
+        public override bool UseCustomer(SuperToken obj, Type declaredType)
         {
-            return obj["$type"]?.ToString() == "InterfaceWrapper";
+            if (!(obj is SuperObject))
+                return false;
+            return ((SuperObject)obj).TypedValue["$type"].Value.ToString() == "InterfaceWrapper";
         }
 
-        public override object Deserialize(JToken obj, SuperJsonSerializer serializer)
+        public override object Deserialize(SuperToken obj, SuperJsonSerializer serializer)
         {
-            var instID = Guid.Parse(obj["ID"].ToString());
-            var interfaceType = Type.GetType(obj["InterfaceType"].ToString());
+            var typed = (SuperObject) obj;
+            var instID = Guid.Parse(typed.TypedValue["ID"].ToString());
+            var interfaceType = Type.GetType(typed.TypedValue["InterfaceType"].ToString());
 
             var getInstanceMethod =
                 typeof (Super).GetMethod(nameof(Super.GetInstance), BindingFlags.Instance | BindingFlags.Public)

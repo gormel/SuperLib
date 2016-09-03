@@ -1,7 +1,7 @@
 ﻿using System;
-using Newtonsoft.Json.Linq;
 using SuperCore.Wrappers;
 using SuperJson;
+using SuperJson.Objects;
 
 namespace SuperCore.SerializeCustomers
 {
@@ -12,7 +12,7 @@ namespace SuperCore.SerializeCustomers
             return obj is DeclarationWrapper;
         }
 
-        public override JToken Serialize(object obj, Type declaredType, SuperJsonSerializer serializer)
+        public override SuperToken Serialize(object obj, Type declaredType, SuperJsonSerializer serializer)
         {
             var typed = (DeclarationWrapper)obj;
             return serializer.Serialize(typed.Instance, Type.GetType(typed.TypeName));

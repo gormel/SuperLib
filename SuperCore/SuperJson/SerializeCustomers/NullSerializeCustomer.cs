@@ -1,5 +1,5 @@
 ﻿using System;
-using Newtonsoft.Json.Linq;
+using SuperJson.Objects;
 
 namespace SuperJson.SerializeCustomers
 {
@@ -10,9 +10,9 @@ namespace SuperJson.SerializeCustomers
             return obj == null;
         }
 
-        public override JToken Serialize(object obj, Type declaredType, SuperJsonSerializer serializer)
+        public override SuperToken Serialize(object obj, Type declaredType, SuperJsonSerializer serializer)
         {
-            return new JValue((object)null);
+            return new SuperNull();
         }
     }
 }

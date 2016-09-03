@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
+using SuperJson.Objects;
 
 namespace SuperJson.SerializeCustomers
 {
@@ -14,16 +11,16 @@ namespace SuperJson.SerializeCustomers
             return obj.GetType().IsArray;
         }
 
-        public override JToken Serialize(object obj, Type declaredType, SuperJsonSerializer serializer)
+        public override SuperToken Serialize(object obj, Type declaredType, SuperJsonSerializer serializer)
         {
             var arr = (Array)obj;
-            var result = new JArray();
+            var resultList = new List<SuperToken>();
             for (var i = 0; i < arr.Length; i++)
             {
                 var elem = arr.GetValue(i);
-                result.Add(serializer.Serialize(elem, obj.GetType().GetElementType()));
+                resultList.Add(serializer.Serialize(elem, obj.GetType().GetElementType()));
             }
-            return result;
+            return new SuperArray(resultList.ToArray());
         }
     }
 }

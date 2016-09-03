@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json.Linq;
 using SuperCore.Core;
 using SuperJson;
 using SuperCore.Utilses;
 using SuperCore.Wrappers;
+using SuperJson.Objects;
 
 namespace SuperCore.SerializeCustomers
 {
@@ -24,9 +25,9 @@ namespace SuperCore.SerializeCustomers
 			return obj is Delegate;
 		}
 
-		public override JToken Serialize (object obj, Type declaredType, SuperJsonSerializer serializer)
+		public override SuperToken Serialize (object obj, Type declaredType, SuperJsonSerializer serializer)
 		{
-			var result = new JObject();
+			var result = new SuperObject();
 
 			var id = Guid.NewGuid();
 
@@ -43,17 +44,19 @@ namespace SuperCore.SerializeCustomers
 
 			mSuper.Register(Activator.CreateInstance(wrapperType, typed), id);
 
-			result.Add ("$type", "DelegateWrapper");
-			result.Add ("ID", id.ToString ());
-			result.Add ("DelegateType", typed.GetType ().AssemblyQualifiedName);
+			result.TypedValue.Add ("$type", new SuperString("DelegateWrapper"));
+			result.TypedValue.Add ("ID", new SuperString(id.ToString ()));
+			result.TypedValue.Add ("DelegateType", new SuperString(typed.GetType ().AssemblyQualifiedName));
 
-			var args = new JArray ();
+		    var listArgs = new List<SuperToken>();
 			foreach (var param in typed.Method.GetParameters()) 
 			{
-				args.Add (param.ParameterType.AssemblyQualifiedName);
+                listArgs.Add (new SuperString(param.ParameterType.AssemblyQualifiedName));
 			}
-			result.Add ("ArgumentTypes", args);
-			result.Add ("ReturnType", typed.Method.ReturnType.AssemblyQualifiedName);
+
+			var args = new SuperArray(listArgs.ToArray());
+			result.TypedValue.Add ("ArgumentTypes", args);
+			result.TypedValue.Add ("ReturnType", new SuperString(typed.Method.ReturnType.AssemblyQualifiedName));
 
 			return result;
 		}
