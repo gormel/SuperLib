@@ -51,6 +51,9 @@ namespace SuperJson
                 var attrs = member.GetCustomAttributes(typeof (CompilerGeneratedAttribute));
                 if (attrs.Any())
                     continue;
+                attrs = member.GetCustomAttributes(typeof(DoNotSerialiseAttribute));
+                if (attrs.Any())
+                    continue;
                 object memberValue = null;
                 Type declaredMemberType = null;
                 if (member.MemberType == MemberTypes.Field)

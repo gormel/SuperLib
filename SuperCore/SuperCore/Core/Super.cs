@@ -10,6 +10,8 @@ using SuperCore.Wrappers;
 using FieldAttributes = System.Reflection.FieldAttributes;
 using MethodAttributes = System.Reflection.MethodAttributes;
 using TypeAttributes = System.Reflection.TypeAttributes;
+using System.Threading;
+using SuperCore.Async.SyncContext;
 
 namespace SuperCore.Core
 {
@@ -25,8 +27,11 @@ namespace SuperCore.Core
 
         internal readonly AssemblyBuilder mAssemblyBuilder;
 
-        protected Super()
+        protected SuperSyncContext mContext;
+
+        protected Super(SuperSyncContext context = null)
         {
+            mContext = context ?? new SuperDefaultSyncContext();
             mAssemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(mAssemblyName, AssemblyBuilderAccess.RunAndSave);
         }
 
@@ -38,8 +43,20 @@ namespace SuperCore.Core
 			var method = declaringType.GetMethod(info.MethodName, 
 				BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
 
-            var result = method.Invoke(obj, method.GetParameters()
-                .Select((p, i) => SuperJsonSerializer.ConvertResult(info.Args[i], p.ParameterType)).ToArray());
+            object result = null;
+            var call = new Action(delegate 
+                {
+                    result = method.Invoke(obj, method.GetParameters()
+                       .Select((p, i) => SuperJsonSerializer.ConvertResult(info.Args[i], p.ParameterType)).ToArray());
+                });
+            if (mContext != null)
+            {
+                mContext.Invoke(call);
+            }
+            else
+            {
+                call();
+            }
             
             result = new DeclarationWrapper
             {

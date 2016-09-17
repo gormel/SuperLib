@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reflection;
 using SuperCore.Core;
+using SuperJson.Parser;
 
 namespace SuperCore.NetData
 {
@@ -13,7 +14,8 @@ namespace SuperCore.NetData
         public string TypeName;
         public string MethodName;
         public object[] Args;
-
+        
+        [DoNotSerialise]
         private Type mType;
         public MethodInfo GetMethodInfo()
         {

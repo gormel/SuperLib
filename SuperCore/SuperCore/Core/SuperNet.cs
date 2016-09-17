@@ -9,6 +9,9 @@ using SuperCore.SerializeCustomers;
 using SuperJson;
 using System.Diagnostics;
 using System.Threading;
+using SuperCore.Wrappers;
+using SuperCore.Async.SyncContext;
+using SuperCore.Async;
 
 namespace SuperCore.Core
 {
@@ -23,7 +26,10 @@ namespace SuperCore.Core
         internal readonly ConcurrentDictionary<Guid, dynamic> WaitingTasks 
             = new ConcurrentDictionary<Guid, dynamic>();
 
-        protected SuperNet()
+        private AsyncLock mSendLock = new AsyncLock();
+
+        protected SuperNet(SuperSyncContext context = null)
+            : base(context)
         {
             mSerializer.SerializeCustomers.Add(new TaskSerializeCustomer(this));
             mSerializer.DeserializeCustomers.Add(new TaskDeserializeCustomer(this));
@@ -41,8 +47,20 @@ namespace SuperCore.Core
         {
             var tcs = new TaskCompletionSource<CallResult>();
             mWaitingCalls.TryAdd(info.CallID, tcs);
-            SendData(info);
             var method = info.GetMethodInfo();
+            for (int i = 0; i < info.Args.Length; i++)
+            {
+                var declaredType = method.GetParameters()[i].ParameterType;
+                var declarationWrapper = new DeclarationWrapper
+                {
+                    Instance = info.Args[i],
+                    TypeName = declaredType.AssemblyQualifiedName
+                };
+                info.Args[i] = declarationWrapper;
+            }
+
+            SendData(info);
+            mContext.Wait(tcs.Task);
             var result = tcs.Task.Result;
             result.Result = SuperJsonSerializer.ConvertResult(result.Result, method.ReturnType);
             return result;
@@ -64,7 +82,7 @@ namespace SuperCore.Core
                 while (true)
                 {
                     stop.ThrowIfCancellationRequested();
-                    var resultObj = await GetObject(client);
+                    var resultObj = await GetObject(client).ConfigureAwait(false);
                     stop.ThrowIfCancellationRequested();
                     var processedResult = ProcessResult(client, resultObj);
                 }
@@ -77,17 +95,25 @@ namespace SuperCore.Core
             }
         }
 
+        protected async Task SendByteArray(Socket client, byte[] data)
+        {
+            using (await mSendLock.Lock())
+            {
+                await client.SendBytes(BitConverter.GetBytes(data.Length));
+                await client.SendBytes(data);
+            }
+        }
+
         private async Task ProcessResult(Socket client, object resultObj)
         {
             if (resultObj is Call)
             {
-                var send = await ReciveCall((Call) resultObj);
+                var send = await ReciveCall((Call) resultObj).ConfigureAwait(false);
                 if (!send.Item1)
                     return;
 
                 var data = GetBytes(send.Item2);
-                await client.SendBytes(BitConverter.GetBytes(data.Length));
-                await client.SendBytes(data);
+                await SendByteArray(client, data);
             }
             else if (resultObj is Result)
             {
@@ -105,7 +131,7 @@ namespace SuperCore.Core
 			return ReciveCall(call);
 		}
 
-        private async Task<Tuple<bool, Result>> ReciveCall(CallDestroyInfo info)
+        private Task<Tuple<bool, Result>> ReciveCall(CallDestroyInfo info)
         {
             object notUsed;
             if (info.ClassID != Guid.Empty)
@@ -118,7 +144,7 @@ namespace SuperCore.Core
                 mRegistred.TryRemove(info.TypeName, out notUsed);
                 Trace.WriteLine($"Collecting {info.TypeName}");
             }
-            return Tuple.Create(false, (Result)null);
+            return Task.FromResult(Tuple.Create(false, (Result)null));
         }
 
 		async Task<Tuple<bool, Result>> ReciveCall(CallInfo info)
@@ -130,7 +156,7 @@ namespace SuperCore.Core
 				return Tuple.Create(false, (Result)null);
 			try
 			{
-				result = await Task.Run(() => Call(info));
+				result = await Task.Run(() => Call(info)).ConfigureAwait(false);
 			}
 			catch (Exception e)
 			{
@@ -187,7 +213,7 @@ namespace SuperCore.Core
 
         protected async Task<object> GetObject(Socket socket)
         {
-            var lenght = BitConverter.ToInt32(await socket.ReadBytes(4), 0);
+            var lenght = BitConverter.ToInt32(await socket.ReadBytes(4).ConfigureAwait(false), 0);
             var packageData = Encoding.UTF8.GetString(await socket.ReadBytes(lenght));
             var result = mSerializer.Deserialize(packageData);
             return result;

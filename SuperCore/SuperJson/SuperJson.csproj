@@ -49,6 +49,7 @@
     <Compile Include="Objects\SuperString.cs" />
     <Compile Include="Objects\SuperToken.cs" />
     <Compile Include="Objects\SuperTokenType.cs" />
+    <Compile Include="Parser\DoNotSerialiseAttribute.cs" />
     <Compile Include="Parser\SuperJsonParser.cs" />
     <Compile Include="SuperJsonSerializer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

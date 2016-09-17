@@ -25,8 +25,8 @@ namespace SuperCore.DeserializeCustomers
         public override object Deserialize(SuperToken obj, SuperJsonSerializer serializer)
         {
             var typed = (SuperObject) obj;
-            var id = Guid.Parse(typed.TypedValue["ID"].ToString());
-            var resultType = Type.GetType(typed.TypedValue["ResultType"].ToString());
+            var id = Guid.Parse(typed.TypedValue["ID"].Value.ToString());
+            var resultType = Type.GetType(typed.TypedValue["ResultType"].Value.ToString());
             var tcsType = typeof(TaskCompletionSource<>).MakeGenericType(resultType);
             dynamic tcs = Activator.CreateInstance(tcsType);
             mSuper.WaitingTasks[id] = tcs;
