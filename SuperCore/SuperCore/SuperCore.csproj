@@ -38,10 +38,14 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Async\AsyncLock.cs" />
     <Compile Include="Async\AsyncSemaphore.cs" />
+    <Compile Include="Async\SyncContext\SuperDefaultSyncContext.cs" />
+    <Compile Include="Async\SyncContext\SuperSyncContext.cs" />
+    <Compile Include="Async\SyncContext\SuperWPFSyncContext.cs" />
     <Compile Include="DeserializeCustomers\InterfaceDeserializeCustomer.cs" />
     <Compile Include="DeserializeCustomers\TaskDeserializeCustomer.cs" />
     <Compile Include="NetData\CallDestroyInfo.cs" />

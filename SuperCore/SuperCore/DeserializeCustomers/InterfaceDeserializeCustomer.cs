@@ -25,8 +25,8 @@ namespace SuperCore.DeserializeCustomers
         public override object Deserialize(SuperToken obj, SuperJsonSerializer serializer)
         {
             var typed = (SuperObject) obj;
-            var instID = Guid.Parse(typed.TypedValue["ID"].ToString());
-            var interfaceType = Type.GetType(typed.TypedValue["InterfaceType"].ToString());
+            var instID = Guid.Parse(typed.TypedValue["ID"].Value.ToString());
+            var interfaceType = Type.GetType(typed.TypedValue["InterfaceType"].Value.ToString());
 
             var getInstanceMethod =
                 typeof (Super).GetMethod(nameof(Super.GetInstance), BindingFlags.Instance | BindingFlags.Public)

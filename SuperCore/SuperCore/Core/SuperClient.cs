@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SuperCore.Async.SyncContext;
+using System;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,6 +9,12 @@ namespace SuperCore.Core
     public class SuperClient : SuperNet
     {
         private Socket mClient;
+
+        public SuperClient(SuperSyncContext context = null)
+            : base(context)
+        {
+
+        }
 
         public Task Connect(string ip, int port, CancellationToken stop = default(CancellationToken))
         {
@@ -24,8 +31,7 @@ namespace SuperCore.Core
             }
             
             var data = GetBytes(info);
-            await mClient.SendBytes(BitConverter.GetBytes(data.Length));
-            await mClient.SendBytes(data);
+            await SendByteArray(mClient, data);
         }
 
         protected override void ClientDisconnected(Socket client)

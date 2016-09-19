@@ -13,7 +13,7 @@ namespace SuperCore
             var buffer = new byte[byteCount];
             while (recived < byteCount)
             {
-                var nowRecived = await s.ReceiveTaskAsync(buffer, recived, byteCount - recived, SocketFlags.None);
+                var nowRecived = await s.ReceiveTaskAsync(buffer, recived, byteCount - recived, SocketFlags.None).ConfigureAwait(false);
                 if (nowRecived == 0)
                     throw new IOException("Disconnected!");
                 recived += nowRecived;
@@ -26,7 +26,7 @@ namespace SuperCore
             var sended = 0;
             while (sended < data.Length)
             {
-                sended += await s.SendTaskAsync(data, sended, data.Length - sended, SocketFlags.None);
+                sended += await s.SendTaskAsync(data, sended, data.Length - sended, SocketFlags.None).ConfigureAwait(false);
             }
         }
 

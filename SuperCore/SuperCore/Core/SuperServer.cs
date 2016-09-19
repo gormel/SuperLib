@@ -1,4 +1,5 @@
 ﻿using SuperCore.Async;
+using SuperCore.Async.SyncContext;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -26,6 +27,11 @@ namespace SuperCore.Core
         }
 
         private readonly ConcurrentBag<Client> mClients = new ConcurrentBag<Client>();
+        
+        public SuperServer(SuperSyncContext context = null)
+            : base(context)
+        {
+        }
 
         public async Task Listen(int port, CancellationToken stop = default(CancellationToken))
         {
@@ -42,6 +48,7 @@ namespace SuperCore.Core
                 Socket client = await Task.Factory.FromAsync(
                     serverSocket.BeginAccept,
                     new Func<IAsyncResult, Socket>(serverSocket.EndAccept), null);
+
                 mClients.Add(new Client(client));
 
                 var yieldedRead = ReadClient(client, stop).ContinueWith(
@@ -62,8 +69,7 @@ namespace SuperCore.Core
                 {
                     if (!c.IsConnected)
                         return;
-                    await c.Socket.SendBytes(BitConverter.GetBytes(data.Length));
-                    await c.Socket.SendBytes(data);
+                    await SendByteArray(c.Socket, data);
                 }
             }));
         }
