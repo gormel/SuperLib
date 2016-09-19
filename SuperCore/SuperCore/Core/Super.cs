@@ -49,20 +49,10 @@ namespace SuperCore.Core
                     result = method.Invoke(obj, method.GetParameters()
                        .Select((p, i) => SuperJsonSerializer.ConvertResult(info.Args[i], p.ParameterType)).ToArray());
                 });
-            if (mContext != null)
-            {
-                mContext.Invoke(call);
-            }
-            else
-            {
-                call();
-            }
+            mContext.Invoke(call);
             
-            result = new DeclarationWrapper
-            {
-                Instance = result,
-                TypeName = method.ReturnType.AssemblyQualifiedName
-            };
+            if (method.ReturnType != result?.GetType())
+                result = new DeclarationWrapper(result, method.ReturnType);
 
             return new CallResult
             {

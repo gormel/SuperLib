@@ -51,7 +51,7 @@
     <Compile Include="NetData\CallDestroyInfo.cs" />
     <Compile Include="Utils\Utils.cs" />
     <Compile Include="Wrappers\IDelegateWrapper.cs" />
-    <Compile Include="Wrappers\InterfaceWrapper.cs" />
+    <Compile Include="Wrappers\DeclarationWrapper.cs" />
     <Compile Include="NetData\CallInfo.cs" />
     <Compile Include="NetData\CallResult.cs" />
     <Compile Include="NetData\Result.cs" />

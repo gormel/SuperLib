@@ -28,11 +28,7 @@ namespace SuperCore.DeserializeCustomers
             var instID = Guid.Parse(typed.TypedValue["ID"].Value.ToString());
             var interfaceType = Type.GetType(typed.TypedValue["InterfaceType"].Value.ToString());
 
-            var getInstanceMethod =
-                typeof (Super).GetMethod(nameof(Super.GetInstance), BindingFlags.Instance | BindingFlags.Public)
-                    .MakeGenericMethod(interfaceType);
-
-            return getInstanceMethod.Invoke(mSuper, new object[] { instID });
+            return mSuper.GetInstance(interfaceType, instID);
         }
     }
 }
