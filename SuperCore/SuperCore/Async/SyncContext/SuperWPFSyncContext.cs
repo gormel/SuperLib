@@ -4,9 +4,9 @@ using System.Windows.Threading;
 
 namespace SuperCore.Async.SyncContext
 {
-    public class SuperWPFSyncContext : SuperSyncContext
+    public class SuperWpfSyncContext : SuperSyncContext
     {
-        private Dispatcher mCreationDispatcher = Dispatcher.CurrentDispatcher;
+        private readonly Dispatcher mCreationDispatcher = Dispatcher.CurrentDispatcher;
         private DispatcherFrame mFrame;
 
         public override void Invoke(Action act)
