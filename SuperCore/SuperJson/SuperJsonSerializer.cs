@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 using SuperJson.Objects;
 using SuperJson.Parser;
 using SuperJson.SerializeCustomers;
@@ -118,12 +119,21 @@ namespace SuperJson
                     }
 
                     var resultObj = (SuperObject) obj;
-
+                    
                     var typeName = (resultObj.TypedValue["$type"] as SuperString)?.TypedValue;//todo: protected serialization constructor
                     if (string.IsNullOrEmpty(typeName))
                         throw new FormatException();
                     var type = Type.GetType(typeName, true);
-                    var inst = Activator.CreateInstance(type);
+                    var defaultCtor = type.GetConstructor(new Type[0]);
+                    object inst = null;
+
+                    if (defaultCtor != null)
+                        inst = Activator.CreateInstance(type);
+                    else
+                        inst = FormatterServices.GetUninitializedObject(type);
+
+                    if (inst == null)
+                        return null;
 
                     var props = resultObj.TypedValue;
                     foreach (var prop in props)

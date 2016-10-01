@@ -8,6 +8,7 @@ using SuperCore.NetData;
 using SuperCore.SerializeCustomers;
 using SuperJson;
 using System.Diagnostics;
+using System.Reflection;
 using System.Threading;
 using SuperCore.Wrappers;
 using SuperCore.Async.SyncContext;
@@ -27,6 +28,7 @@ namespace SuperCore.Core
             = new ConcurrentDictionary<Guid, dynamic>();
 
         private AsyncLock mSendLock = new AsyncLock();
+        private AsyncLock mReciveLock = new AsyncLock();
 
         protected SuperNet(SuperSyncContext context = null)
             : base(context)
@@ -137,12 +139,10 @@ namespace SuperCore.Core
             if (info.ClassID != Guid.Empty)
             {
                 mIdRegistred.TryRemove(info.ClassID, out notUsed);
-                Trace.WriteLine($"Collecting {info.ClassID}");
             }
             else
             {
                 mRegistred.TryRemove(info.TypeName, out notUsed);
-                Trace.WriteLine($"Collecting {info.TypeName}");
             }
             return Task.FromResult(Tuple.Create(false, (Result)null));
         }
@@ -179,7 +179,7 @@ namespace SuperCore.Core
         void ReciveData(CallResult result)
         {
             TaskCompletionSource<CallResult> tcs;
-			if (!mWaitingCalls.TryRemove (result.CallID, out tcs))
+            if (!mWaitingCalls.TryRemove (result.CallID, out tcs))
 				return;
             if (result.Exception)
             {
@@ -213,10 +213,13 @@ namespace SuperCore.Core
 
         protected async Task<object> GetObject(Socket socket)
         {
-            var lenght = BitConverter.ToInt32(await socket.ReadBytes(4).ConfigureAwait(false), 0);
-            var packageData = Encoding.UTF8.GetString(await socket.ReadBytes(lenght));
-            var result = mSerializer.Deserialize(packageData);
-            return result;
+            using (await mReciveLock.Lock())
+            {
+                var lenght = BitConverter.ToInt32(await socket.ReadBytes(4).ConfigureAwait(false), 0);
+                var packageData = Encoding.UTF8.GetString(await socket.ReadBytes(lenght));
+                var result = mSerializer.Deserialize(packageData);
+                return result;
+            }
         }
 
         protected byte[] GetBytes(object obj)
