@@ -51,11 +51,9 @@ namespace SuperCore.Core
             for (int i = 0; i < info.Args.Length; i++)
             {
                 var declaredType = method.GetParameters()[i].ParameterType;
-                var declarationWrapper = new DeclarationWrapper
-                {
-                    Instance = info.Args[i],
-                    TypeName = declaredType.AssemblyQualifiedName
-                };
+                if (declaredType == info.Args[i].GetType())
+                    continue;
+                var declarationWrapper = new DeclarationWrapper(info.Args[i], declaredType);
                 info.Args[i] = declarationWrapper;
             }
 
