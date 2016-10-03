@@ -1,5 +1,4 @@
 ﻿using SuperCore.Async.SyncContext;
-using System;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,7 +22,7 @@ namespace SuperCore.Core
             return ReadClient(mClient, stop);
         }
         
-        internal async override void SendData(object info)
+        internal override async void SendData(object info)
         {
             if (mClient == null)
             {

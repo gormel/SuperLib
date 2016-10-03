@@ -8,7 +8,6 @@ using SuperCore.NetData;
 using SuperCore.SerializeCustomers;
 using SuperJson;
 using System.Diagnostics;
-using System.Reflection;
 using System.Threading;
 using SuperCore.Wrappers;
 using SuperCore.Async.SyncContext;
@@ -27,8 +26,7 @@ namespace SuperCore.Core
         internal readonly ConcurrentDictionary<Guid, dynamic> WaitingTasks 
             = new ConcurrentDictionary<Guid, dynamic>();
 
-        private AsyncLock mSendLock = new AsyncLock();
-        private AsyncLock mReciveLock = new AsyncLock();
+        private readonly AsyncLock mSendLock = new AsyncLock();
 
         protected SuperNet(SuperSyncContext context = null)
             : base(context)
@@ -149,7 +147,7 @@ namespace SuperCore.Core
 
 		async Task<Tuple<bool, Result>> ReciveCall(CallInfo info)
 		{
-		    Result result = null;
+		    Result result;
 			if (info.ClassID != Guid.Empty && !mIdRegistred.ContainsKey (info.ClassID))
 				return Tuple.Create(false, (Result)null);
 			if (info.ClassID == Guid.Empty && !mRegistred.ContainsKey (info.TypeName))
@@ -213,13 +211,10 @@ namespace SuperCore.Core
 
         protected async Task<object> GetObject(Socket socket)
         {
-            using (await mReciveLock.Lock())
-            {
-                var lenght = BitConverter.ToInt32(await socket.ReadBytes(4).ConfigureAwait(false), 0);
-                var packageData = Encoding.UTF8.GetString(await socket.ReadBytes(lenght));
-                var result = mSerializer.Deserialize(packageData);
-                return result;
-            }
+            var lenght = BitConverter.ToInt32(await socket.ReadBytes(4).ConfigureAwait(false), 0);
+            var packageData = Encoding.UTF8.GetString(await socket.ReadBytes(lenght));
+            var result = mSerializer.Deserialize(packageData);
+            return result;
         }
 
         protected byte[] GetBytes(object obj)

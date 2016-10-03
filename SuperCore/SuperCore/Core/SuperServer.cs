@@ -59,7 +59,7 @@ namespace SuperCore.Core
             }
         }
         
-        internal async override void SendData(object info)
+        internal override async void SendData(object info)
         {
             byte[] data = GetBytes(info);
             

@@ -74,6 +74,7 @@ namespace SuperJson
                     }
                     catch
                     {
+                        memberValue = null;
                     }
                     declaredMemberType = propInfo.PropertyType;
                 }
@@ -120,12 +121,12 @@ namespace SuperJson
 
                     var resultObj = (SuperObject) obj;
                     
-                    var typeName = (resultObj.TypedValue["$type"] as SuperString)?.TypedValue;//todo: protected serialization constructor
+                    var typeName = (resultObj.TypedValue["$type"] as SuperString)?.TypedValue;
                     if (string.IsNullOrEmpty(typeName))
                         throw new FormatException();
                     var type = Type.GetType(typeName, true);
                     var defaultCtor = type.GetConstructor(new Type[0]);
-                    object inst = null;
+                    object inst;
 
                     if (defaultCtor != null)
                         inst = Activator.CreateInstance(type);
