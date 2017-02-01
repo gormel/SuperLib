@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -66,7 +67,7 @@ namespace SuperJson
                 if (member.MemberType == MemberTypes.Property)
                 {
                     var propInfo = (PropertyInfo)member;
-                    if (!propInfo.CanRead || !propInfo.CanWrite)
+                    if (!propInfo.CanRead || !propInfo.CanWrite || propInfo.GetIndexParameters().Length > 0)
                         continue;
                     try
                     {
@@ -120,18 +121,27 @@ namespace SuperJson
                     }
 
                     var resultObj = (SuperObject) obj;
-                    
-                    var typeName = (resultObj.TypedValue["$type"] as SuperString)?.TypedValue;
-                    if (string.IsNullOrEmpty(typeName))
-                        throw new FormatException();
-                    var type = Type.GetType(typeName, true);
-                    var defaultCtor = type.GetConstructor(new Type[0]);
-                    object inst;
 
-                    if (defaultCtor != null)
-                        inst = Activator.CreateInstance(type);
+                    var typeName = "";
+
+                    if (resultObj.TypedValue.ContainsKey("$type"))
+                        typeName = (resultObj.TypedValue["$type"] as SuperString)?.TypedValue;
+                    Type type = null;
+                    if (!string.IsNullOrEmpty(typeName))
+                        type = Type.GetType(typeName, true);
+                    var defaultCtor = type?.GetConstructor(new Type[0]);
+                    object inst;
+                    if (type != null)
+                    {
+                        if (defaultCtor != null)
+                            inst = Activator.CreateInstance(type);
+                        else
+                            inst = FormatterServices.GetUninitializedObject(type);
+                    }
                     else
-                        inst = FormatterServices.GetUninitializedObject(type);
+                    {
+                        inst = new ExpandoObject();
+                    }
 
                     if (inst == null)
                         return null;
@@ -142,19 +152,26 @@ namespace SuperJson
                         if (prop.Key.StartsWith("$"))
                             continue;
 
-                        var memInfo = type.GetMember(prop.Key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)[0];
-                        if (memInfo.MemberType == MemberTypes.Field)
+                        if (type != null)
                         {
-                            var fieldInfo = (FieldInfo)memInfo;
-                            var propValue = Deserialize(prop.Value, fieldInfo.FieldType);
-                            fieldInfo.SetValue(inst, ConvertResult(propValue, fieldInfo.FieldType));
-                        }
+                            var memInfo = type.GetMember(prop.Key, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)[0];
+                            if (memInfo.MemberType == MemberTypes.Field)
+                            {
+                                var fieldInfo = (FieldInfo) memInfo;
+                                var propValue = Deserialize(prop.Value, fieldInfo.FieldType);
+                                fieldInfo.SetValue(inst, ConvertResult(propValue, fieldInfo.FieldType));
+                            }
 
-                        if (memInfo.MemberType == MemberTypes.Property)
+                            if (memInfo.MemberType == MemberTypes.Property)
+                            {
+                                var propInfo = (PropertyInfo) memInfo;
+                                var propValue = Deserialize(prop.Value, propInfo.PropertyType);
+                                propInfo.SetValue(inst, ConvertResult(propValue, propInfo.PropertyType));
+                            }
+                        }
+                        else
                         {
-                            var propInfo = (PropertyInfo)memInfo;
-                            var propValue = Deserialize(prop.Value, propInfo.PropertyType);
-                            propInfo.SetValue(inst, ConvertResult(propValue, propInfo.PropertyType));
+                            ((IDictionary<string, object>)inst).Add(prop.Key, Deserialize(prop.Value, null));
                         }
                     }
 
