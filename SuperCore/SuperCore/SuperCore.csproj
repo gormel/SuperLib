@@ -30,6 +30,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="SuperJson, Version=0.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\SuperJson.0.1.0\lib\net452\SuperJson.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -71,10 +75,7 @@
     <Compile Include="Wrappers\DelegateWrapper.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SuperJson\SuperJson.csproj">
-      <Project>{4B6CAB65-F1C2-428B-8F46-8BA261038DA4}</Project>
-      <Name>SuperJson</Name>
-    </ProjectReference>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
