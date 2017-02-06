@@ -8,6 +8,20 @@ namespace JsonTestes
 {
     class Program
 	{
+        private class Test1
+        {
+            private static readonly Lazy<Test1> mInstance = new Lazy<Test1>(() => new Test1());
+            public static Test1 Instance => mInstance.Value;
+
+            public int Field1;
+            public int Property1 { get; set; }
+
+            [DoNotSerialise]
+            public int Property2 { get; set; }
+
+            public Dictionary<int, int> DictProperty = new Dictionary<int, int>(); 
+        }
+
         static void Main(string[] args)
         {
 //            var result = "";
@@ -42,6 +56,8 @@ namespace JsonTestes
             var json = serializer.Serialize(new[] { 1, 2.7, 3, 5 });
             var list = new List<int>() { 0, 5, 8, 4 };
             var json1 = serializer.Serialize(list);
+            var cl = new Test1() { Field1 = 5, Property1 = 7, Property2 = 9 };
+            var json2 = serializer.Serialize(cl);
 
             var parsed = parser.Parse(json1);
 
@@ -49,6 +65,7 @@ namespace JsonTestes
 
             var arr1 = serializer.Deserialize(json);
             var list1 = serializer.Deserialize(json1);
+            var cl1 = serializer.Deserialize(json2);
 
             Console.ReadLine();
         }

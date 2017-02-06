@@ -1,14 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using SuperJson.Objects;
 
 namespace SuperJson.Parser
 {
     public class SuperJsonParser
     {
+        private struct StrinToTokenPair
+        {
+            public string String { get; set; }
+            public SuperToken Token { get; set; }
+
+            public StrinToTokenPair(string s, SuperToken token)
+            {
+                String = s;
+                Token = token;
+            }
+        }
+
         public string Write(SuperToken token)
         {
             switch (token.TokenType)
@@ -244,7 +253,7 @@ namespace SuperJson.Parser
             if (props == null)
                 result.Value = new Dictionary<string, SuperObject>();
             else
-                result.Value = props.ToDictionary(t => t.Item1, t => t.Item2);
+                result.Value = props.ToDictionary(t => t.String, t => t.Token);
 
             SkipSpaces(data, ref pos);
 
@@ -256,7 +265,7 @@ namespace SuperJson.Parser
             return result;
         }
 
-        private List<Tuple<string, SuperToken>> ParseObjectPropsList(string data, ref int pos)
+        private List<StrinToTokenPair> ParseObjectPropsList(string data, ref int pos)
         {
             if (pos >= data.Length)
                 return null;
@@ -281,7 +290,7 @@ namespace SuperJson.Parser
             SkipSpaces(data, ref pos);
 
             if (pos >= data.Length || data[pos] != ',')
-                return new List<Tuple<string, SuperToken>>() {Tuple.Create(propName.TypedValue, propValue)};
+                return new List<StrinToTokenPair>() { new StrinToTokenPair(propName.TypedValue, propValue) };
 
             pos++;
 
@@ -291,7 +300,7 @@ namespace SuperJson.Parser
             if (tail == null)
                 return null;
 
-            return new[] {Tuple.Create(propName.TypedValue, propValue)}.Concat(tail).ToList();
+            return new[] { new StrinToTokenPair(propName.TypedValue, propValue) }.Concat(tail).ToList();
         }
 
         private SuperBool ParseBool(string data, ref int pos)

@@ -50,10 +50,10 @@ namespace SuperJson
             
             foreach (var member in members)
             {
-                var attrs = member.GetCustomAttributes(typeof (CompilerGeneratedAttribute));
+                var attrs = member.GetCustomAttributes(typeof (CompilerGeneratedAttribute), false);
                 if (attrs.Any())
                     continue;
-                attrs = member.GetCustomAttributes(typeof(DoNotSerialiseAttribute));
+                attrs = member.GetCustomAttributes(typeof(DoNotSerialiseAttribute), false);
                 if (attrs.Any())
                     continue;
                 object memberValue = null;
@@ -71,7 +71,7 @@ namespace SuperJson
                         continue;
                     try
                     {
-                        memberValue = propInfo.GetValue(obj);
+                        memberValue = propInfo.GetValue(obj, null);
                     }
                     catch
                     {
@@ -166,7 +166,7 @@ namespace SuperJson
                             {
                                 var propInfo = (PropertyInfo) memInfo;
                                 var propValue = Deserialize(prop.Value, propInfo.PropertyType);
-                                propInfo.SetValue(inst, ConvertResult(propValue, propInfo.PropertyType));
+                                propInfo.SetValue(inst, ConvertResult(propValue, propInfo.PropertyType), null);
                             }
                         }
                         else
