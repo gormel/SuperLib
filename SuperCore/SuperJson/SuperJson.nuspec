@@ -8,7 +8,7 @@
     <owners>$author$</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>Initial release.</releaseNotes>
+    <releaseNotes>Paser tests compatible.</releaseNotes>
     <copyright>Copyright 2017</copyright>
     <tags>JSON Super</tags>
   </metadata>

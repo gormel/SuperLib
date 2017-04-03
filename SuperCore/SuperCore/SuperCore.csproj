@@ -30,8 +30,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="SuperJson, Version=0.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\SuperJson.0.1.0\lib\net452\SuperJson.dll</HintPath>
+    <Reference Include="SuperJson, Version=0.1.0.2, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\SuperJson.0.1.0.2\lib\net40\SuperJson.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
