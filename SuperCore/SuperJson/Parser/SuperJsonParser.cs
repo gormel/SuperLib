@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using SuperJson.Objects;
 
@@ -23,8 +24,9 @@ namespace SuperJson.Parser
             switch (token.TokenType)
             {
                 case SuperTokenType.Number:
+                    return ((SuperNumber) token).TypedValue.ToString(CultureInfo.InvariantCulture);
                 case SuperTokenType.Bool:
-                    return $"{token.Value}";
+                    return $"{token.Value.ToString().ToLower()}";
                 case SuperTokenType.String:
                     return $"\"{token.Value}\"";
                 case SuperTokenType.Array:
@@ -43,7 +45,7 @@ namespace SuperJson.Parser
                     }
                     return objResult.TrimEnd(',') + "}";
                 case SuperTokenType.Null:
-                    return "Null";
+                    return "null";
             }
             return null;
         }
@@ -51,46 +53,49 @@ namespace SuperJson.Parser
         public SuperToken Parse(string rawData)
         {
             int pos = 0;
-            return ParseToken(rawData, ref pos);
+            var result = ParseToken(rawData, ref pos, 0);
+            SkipSpaces(rawData, ref pos);
+            if (pos < rawData.Length)
+                return null;
+            return result;
         }
-
-        private SuperToken ParseToken(string data, ref int pos)
+        
+        private SuperToken ParseToken(string data, ref int pos, int deep)
         {
-            var savedPos = pos;
+            SkipSpaces(data, ref pos);
 
-            var tryNumber = ParseNumber(data, ref pos);
-            if (tryNumber != null)
-                return tryNumber;
+            if (pos >= data.Length)
+                return null;
 
-            pos = savedPos;
+            if (deep > 1000)
+                return null;
 
-            var tryString = ParseString(data, ref pos);
-            if (tryString != null)
-                return tryString;
-
-            pos = savedPos;
-
-            var tryArray = ParseArray(data, ref pos);
-            if (tryArray != null)
-                return tryArray;
-
-            pos = savedPos;
-
-            var tryObject = ParseObject(data, ref pos);
-            if (tryObject != null)
-                return tryObject;
-
-            pos = savedPos;
-
-            var tryBool = ParseBool(data, ref pos);
-            if (tryBool != null)
-                return tryBool;
-
-            pos = savedPos;
-
-            var tryNull = ParseNull(data, ref pos);
-            if (tryNull != null)
-                return tryNull;
+            switch (data[pos])
+            {
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                case '-':
+                    return ParseNumber(data, ref pos);
+                case '"':
+                    return ParseString(data, ref pos);
+                case '[':
+                    return ParseArray(data, ref pos, deep + 1);
+                case '{':
+                    return ParseObject(data, ref pos, deep + 1);
+                case 't':
+                case 'f':
+                    return ParseBool(data, ref pos);
+                case 'n':
+                    return ParseNull(data, ref pos);
+            }
 
             return null;
         }
@@ -106,7 +111,7 @@ namespace SuperJson.Parser
                 parsed += data[pos++];
 
             var seq = ParseDigitSequence(data, ref pos);
-            if (seq == null)
+            if (seq == null || seq.Length > 1 && seq[0] == '0')
                 return null;
             parsed += seq;
 
@@ -123,7 +128,12 @@ namespace SuperJson.Parser
             }
 
             if (pos >= data.Length)
-                return new SuperNumber(double.Parse(parsed));
+            {
+                double result;
+                if (double.TryParse(parsed, NumberStyles.Any, CultureInfo.InvariantCulture, out result))
+                    return new SuperNumber(result);
+                return null;
+            }
 
             if (data[pos] == 'e' || data[pos] == 'E')
             {
@@ -138,7 +148,10 @@ namespace SuperJson.Parser
                 parsed += seq;
             }
 
-            return new SuperNumber(double.Parse(parsed));
+            double value;
+            if (double.TryParse(parsed, NumberStyles.Any, CultureInfo.InvariantCulture, out value))
+                return new SuperNumber(value);
+            return null;
         }
 
         private string ParseDigitSequence(string data, ref int pos)
@@ -163,7 +176,50 @@ namespace SuperJson.Parser
             var parsed = "";
             while (pos < data.Length && data[pos] != '"')
             {
-                parsed += data[pos++];
+                var symbol = data[pos++];
+                if (symbol >= 0 && symbol <= 0x1f) //is control symbol
+                    return null;
+                if (symbol == '\\')
+                {
+                    if (pos >= data.Length)
+                        return null;
+                    symbol = data[pos++];
+                    switch (symbol)
+                    {
+                        case 'u':
+                            if (pos + 3 >= data.Length)
+                                return null;
+                            var num = data.Substring(pos, 4);
+                            int sym;
+                            if (!int.TryParse(num, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out sym))
+                                return null;
+                            symbol = (char)sym;
+                            break;
+                        case '"':
+                        case '\\':
+                        case '/':
+                            break;
+                        case 'b':
+                            symbol = '\b';
+                            break;
+                        case 'f':
+                            symbol = '\f';
+                            break;
+                        case 'n':
+                            symbol = '\n';
+                            break;
+                        case 'r':
+                            symbol = '\r';
+                            break;
+                        case 't':
+                            symbol = '\t';
+                            break;
+                        default:
+                            return null;
+                    }
+                }
+
+                parsed += symbol;
             }
 
             if (pos >= data.Length)
@@ -173,22 +229,29 @@ namespace SuperJson.Parser
             return new SuperString(parsed);
         }
 
-        private SuperArray ParseArray(string data, ref int pos)
+        private SuperArray ParseArray(string data, ref int pos, int deep)
         {
             if (pos >= data.Length || data[pos] != '[')
                 return null;
-
-            SuperArray result;
 
             pos++;
 
             SkipSpaces(data, ref pos);
 
-            var elems = ParseArrayElems(data, ref pos);
+            if (pos >= data.Length)
+                return null;
+
+            if (data[pos] == ']')
+            {
+                pos++;
+                return new SuperArray(new SuperToken[0]);
+            }
+
+            var elems = ParseArrayElems(data, ref pos, deep + 1);
             if (elems == null)
-                result = new SuperArray(new SuperToken[0]);
-            else
-                result = new SuperArray(elems.ToArray());
+                return null;
+
+            var result = new SuperArray(elems.ToArray());
 
             SkipSpaces(data, ref pos);
 
@@ -200,17 +263,23 @@ namespace SuperJson.Parser
             return result;
         }
 
-        private List<SuperToken> ParseArrayElems(string data, ref int pos)
+        private List<SuperToken> ParseArrayElems(string data, ref int pos, int deep)
         {
+            if (deep > 10000)
+                return null;
+            
             if (pos >= data.Length)
                 return null;
-
-            var head = ParseToken(data, ref pos);
+            
+            var head = ParseToken(data, ref pos, deep + 1);
 
             if (head == null)
                 return null;
 
             SkipSpaces(data, ref pos);
+
+            if (pos >= data.Length)
+                return null;
 
             if (data[pos] != ',')
                 return new List<SuperToken>() {head};
@@ -218,9 +287,9 @@ namespace SuperJson.Parser
 
             SkipSpaces(data, ref pos);
 
-            var tail = ParseArrayElems(data, ref pos);
+            var tail = ParseArrayElems(data, ref pos, deep + 1);
 
-            if (tail == null)
+            if (tail == null || tail.Count < 1)
                 return null;
 
             return new[] {head}.Concat(tail).ToList();
@@ -231,13 +300,17 @@ namespace SuperJson.Parser
             if (pos >= data.Length)
                 return;
 
-            while (char.IsWhiteSpace(data[pos]))
+            while (data[pos] == ' ' || data[pos] == '\t' ||
+                data[pos] == '\n' || data[pos] == '\r')
             {
                 pos++;
+
+                if (pos >= data.Length)
+                    return;
             }
         }
 
-        private SuperObject ParseObject(string data, ref int pos)
+        private SuperObject ParseObject(string data, ref int pos, int deep)
         {
             if (pos >= data.Length || data[pos] != '{')
                 return null;
@@ -246,14 +319,28 @@ namespace SuperJson.Parser
 
             SkipSpaces(data, ref pos);
 
+            if (pos >= data.Length)
+                return null;
+
+            if (data[pos] == '}')
+            {
+                pos++;
+                return new SuperObject();
+            }
+
             SuperObject result = new SuperObject();
 
-            var props = ParseObjectPropsList(data, ref pos);
+            var props = ParseObjectPropsList(data, ref pos, deep + 1);
 
             if (props == null)
-                result.Value = new Dictionary<string, SuperObject>();
-            else
-                result.Value = props.ToDictionary(t => t.String, t => t.Token);
+                return null;
+
+            result.Value = new Dictionary<string, SuperToken>();
+
+            foreach (var pair in props)
+            {
+                result.TypedValue[pair.String] = pair.Token;
+            }
 
             SkipSpaces(data, ref pos);
 
@@ -265,8 +352,11 @@ namespace SuperJson.Parser
             return result;
         }
 
-        private List<StrinToTokenPair> ParseObjectPropsList(string data, ref int pos)
+        private List<StrinToTokenPair> ParseObjectPropsList(string data, ref int pos, int deep)
         {
+            if (deep > 10000)
+                return null;
+
             if (pos >= data.Length)
                 return null;
 
@@ -276,13 +366,19 @@ namespace SuperJson.Parser
 
             SkipSpaces(data, ref pos);
 
+            if (pos >= data.Length)
+                return null;
+
             if (data[pos] != ':')
                 return null;
             pos++;
 
             SkipSpaces(data, ref pos);
 
-            var propValue = ParseToken(data, ref pos);
+            if (pos >= data.Length)
+                return null;
+
+            var propValue = ParseToken(data, ref pos, deep + 1);
 
             if (propValue == null)
                 return null;
@@ -296,7 +392,7 @@ namespace SuperJson.Parser
 
             SkipSpaces(data, ref pos);
 
-            var tail = ParseObjectPropsList(data, ref pos);
+            var tail = ParseObjectPropsList(data, ref pos, deep + 1);
             if (tail == null)
                 return null;
 
@@ -308,13 +404,13 @@ namespace SuperJson.Parser
             if (pos >= data.Length)
                 return null;
 
-            if (data.Substring(pos).StartsWith("True"))
+            if (data.Substring(pos).StartsWith("true"))
             {
                 pos += 4;
                 return new SuperBool(true);
             }
 
-            if (data.Substring(pos).StartsWith("False"))
+            if (data.Substring(pos).StartsWith("false"))
             {
                 pos += 5;
                 return new SuperBool(false);
@@ -328,7 +424,7 @@ namespace SuperJson.Parser
             if (pos >= data.Length)
                 return null;
 
-            if (data.Substring(pos).StartsWith("Null"))
+            if (data.Substring(pos).StartsWith("null"))
             {
                 pos += 4;
                 return new SuperNull();
